@@ -1,0 +1,226 @@
+# ── Raw ───────────────────────────────────────────────────────────────
+raw_data:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/diabetes-dataset-modelling.csv
+
+raw_data_inference:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/diabetes-dataset-inference.csv
+
+# ── Intermediate ─────────────────────────────────────────────────────
+cleaned_data:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/cleaned_data.parquet
+
+featured_data:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/featured_data.parquet
+
+cleaned_inference:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/cleaned_inference.parquet
+
+featured_inference:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/featured_inference.parquet
+
+# ── Primary ──────────────────────────────────────────────────────────
+split_data:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/split_data.parquet
+
+encoded_data:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/encoded_data.parquet
+
+production_encoded_data:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/production_encoded_data.parquet
+
+encoded_inference:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/encoded_inference.parquet
+
+# ── Feature ──────────────────────────────────────────────────────────
+master_table:
+  type: pandas.ParquetDataset
+  filepath: data/04_feature/master_table.parquet
+
+production_master_table:
+  type: pandas.ParquetDataset
+  filepath: data/04_feature/production_master_table.parquet
+
+scaled_inference:
+  type: pandas.ParquetDataset
+  filepath: data/04_feature/scaled_inference.parquet
+
+# ── Models / Artifacts ───────────────────────────────────────────────
+encoders:
+  type: pickle.PickleDataset
+  filepath: data/06_models/encoders.pkl
+
+scalers:
+  type: pickle.PickleDataset
+  filepath: data/06_models/scalers.pkl
+
+baseline_model:
+  type: pickle.PickleDataset
+  filepath: data/06_models/baseline_model.pkl
+
+optimized_model:
+  type: pickle.PickleDataset
+  filepath: data/06_models/optimized_model.pkl
+
+xgboost_model:
+  type: pickle.PickleDataset
+  filepath: data/06_models/xgboost_model.pkl
+
+production_encoders:
+  type: pickle.PickleDataset
+  filepath: data/06_models/production_encoders.pkl
+
+production_scalers:
+  type: pickle.PickleDataset
+  filepath: data/06_models/production_scalers.pkl
+
+raw_production_model:
+  type: pickle.PickleDataset
+  filepath: data/06_models/raw_production_model.pkl
+
+production_model:
+  type: pickle.PickleDataset
+  filepath: data/06_models/production_model.pkl
+
+# ── Model Output ─────────────────────────────────────────────────────
+baseline_metrics:
+  type: pickle.PickleDataset
+  filepath: data/07_model_output/baseline_metrics.pkl
+
+optimized_metrics:
+  type: pickle.PickleDataset
+  filepath: data/07_model_output/optimized_metrics.pkl
+
+xgboost_metrics:
+  type: pickle.PickleDataset
+  filepath: data/07_model_output/xgboost_metrics.pkl
+
+best_model_config:
+  type: pickle.PickleDataset
+  filepath: data/07_model_output/best_model_config.pkl
+
+selected_feature_columns:
+  type: pickle.PickleDataset
+  filepath: data/07_model_output/selected_feature_columns.pkl
+
+feature_selection_frontier:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/feature_selection_frontier.parquet
+
+feature_selection_stability:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/feature_selection_stability.parquet
+
+feature_selection_manifest:
+  type: json.JSONDataset
+  filepath: data/07_model_output/feature_selection_manifest.json
+
+test_report:
+  type: pickle.PickleDataset
+  filepath: data/07_model_output/test_report.pkl
+
+model_frontier:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/model_frontier.parquet
+
+model_selection_scorecard:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/model_selection_scorecard.parquet
+
+cv_fold_metrics:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/cv_fold_metrics.parquet
+
+cv_metric_summary:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/cv_metric_summary.parquet
+
+bootstrap_metric_intervals:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/bootstrap_metric_intervals.parquet
+
+permutation_feature_importance:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/permutation_feature_importance.parquet
+
+perturbation_sensitivity_audit:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/perturbation_sensitivity_audit.parquet
+
+perturbation_sensitivity_summary:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/perturbation_sensitivity_summary.parquet
+
+threshold_metrics:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/threshold_metrics.parquet
+
+split_comparison_report:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/split_comparison_report.parquet
+
+nested_cv_audit:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/nested_cv_audit.parquet
+
+modelling_design_audit:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/modelling_design_audit.parquet
+
+selected_deployment_policy:
+  type: pickle.PickleDataset
+  filepath: data/07_model_output/selected_deployment_policy.pkl
+
+predictions:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/predictions.parquet
+
+risk_report:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/risk_report.parquet
+
+# ── Ops / Governance ─────────────────────────────────────────────────
+data_contract_report:
+  type: pandas.ParquetDataset
+  filepath: data/09_ops/data_contract_report.parquet
+
+data_freshness_report:
+  type: pandas.ParquetDataset
+  filepath: data/09_ops/data_freshness_report.parquet
+
+data_drift_report:
+  type: pandas.ParquetDataset
+  filepath: data/09_ops/data_drift_report.parquet
+
+split_strategy_report:
+  type: pandas.ParquetDataset
+  filepath: data/09_ops/split_strategy_report.parquet
+
+latest_experiment_run:
+  type: pickle.PickleDataset
+  filepath: data/09_ops/latest_experiment_run.pkl
+
+latest_model_registry_entry:
+  type: pickle.PickleDataset
+  filepath: data/09_ops/latest_model_registry_entry.pkl
+
+latest_training_run_manifest:
+  type: json.JSONDataset
+  filepath: data/09_ops/latest_training_run_manifest.json
+
+latest_serving_manifest:
+  type: json.JSONDataset
+  filepath: data/09_ops/latest_serving_manifest.json
+
+latest_inference_contract:
+  type: json.JSONDataset
+  filepath: data/09_ops/latest_inference_contract.json

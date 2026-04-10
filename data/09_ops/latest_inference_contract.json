@@ -1,0 +1,117 @@
+{
+  "manifest_type": "inference_contract",
+  "generated_at": "2026-04-10T01:46:05.236138+00:00",
+  "input_fields": [
+    {
+      "name": "Pregnancies",
+      "required": true,
+      "kind": "numerical"
+    },
+    {
+      "name": "Glucose",
+      "required": true,
+      "kind": "numerical"
+    },
+    {
+      "name": "BloodPressure",
+      "required": true,
+      "kind": "numerical"
+    },
+    {
+      "name": "SkinThickness",
+      "required": true,
+      "kind": "numerical"
+    },
+    {
+      "name": "Insulin",
+      "required": true,
+      "kind": "numerical"
+    },
+    {
+      "name": "BMI",
+      "required": true,
+      "kind": "numerical"
+    },
+    {
+      "name": "DiabetesPedigreeFunction",
+      "required": true,
+      "kind": "numerical"
+    },
+    {
+      "name": "Age",
+      "required": true,
+      "kind": "numerical"
+    }
+  ],
+  "derived_feature_columns": [],
+  "model_feature_columns": [
+    "Glucose",
+    "BMI",
+    "DiabetesPedigreeFunction",
+    "Age"
+  ],
+  "model_class_path": "catboost.CatBoostClassifier",
+  "train_splits": [
+    "train",
+    "validation",
+    "test"
+  ],
+  "decision_policy_name": "prioritize_recall",
+  "decision_threshold": 0.15000000000000002,
+  "risk_bands": [
+    {
+      "name": "low",
+      "label": "Baixo risco",
+      "min_probability": 0.0,
+      "max_probability": 0.3
+    },
+    {
+      "name": "moderate",
+      "label": "Risco moderado",
+      "min_probability": 0.3,
+      "max_probability": 0.55
+    },
+    {
+      "name": "high",
+      "label": "Alto risco",
+      "min_probability": 0.55,
+      "max_probability": 0.75
+    },
+    {
+      "name": "critical",
+      "label": "Risco critico",
+      "min_probability": 0.75,
+      "max_probability": 1.01
+    }
+  ],
+  "pipeline_steps": [
+    "clean_data",
+    "add_features",
+    "transform_encoders",
+    "transform_scalers",
+    "predict"
+  ],
+  "outputs": [
+    {
+      "name": "prediction",
+      "type": "int",
+      "description": "Binary decision using the deployed policy threshold."
+    },
+    {
+      "name": "prediction_proba",
+      "type": "float",
+      "description": "Estimated probability for the positive class."
+    },
+    {
+      "name": "risk_score",
+      "type": "float",
+      "description": "Probability rescaled to a 0-100 risk score."
+    },
+    {
+      "name": "risk_band",
+      "type": "string",
+      "description": "Configured policy risk band for the score."
+    }
+  ],
+  "target_column": "Outcome"
+}

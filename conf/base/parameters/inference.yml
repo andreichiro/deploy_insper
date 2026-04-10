@@ -1,0 +1,7 @@
+inference_raw_columns:
+  categorical: ${raw_columns.categorical}
+  numerical: ${raw_columns.numerical}
+
+inference_columns:
+  categorical: ${columns.categorical}
+  numerical: ${columns.numerical}

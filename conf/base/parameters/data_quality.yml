@@ -1,0 +1,59 @@
+# Qualidade de dados — classes GX e limites 100% declarativos (sem hardcode no Python).
+# Troca de expectation ou hiperparâmetro de validação = só editar aqui.
+
+data_quality:
+  cleaned:
+    min_rows: 20
+
+    # Nomes das classes em great_expectations.expectations (igual class_path na modelagem).
+    classes:
+      column_to_exist: ExpectColumnToExist
+      column_not_null: ExpectColumnValuesToNotBeNull
+      column_between: ExpectColumnValuesToBeBetween
+      table_min_rows: ExpectTableRowCountToBeBetween
+      target_distinct_in_set: ExpectColumnDistinctValuesToBeInSet
+
+    not_null_severity: critical
+    between_severity: warning
+    table_min_rows_severity: critical
+
+    # [min, max] por coluna numérica bruta (antes da feature derivada)
+    numerical_ranges:
+      Pregnancies: [0, 20]
+      Glucose: [0, 300]
+      BloodPressure: [0, 200]
+      SkinThickness: [0, 100]
+      Insulin: [0, 900]
+      BMI: [0, 80]
+      DiabetesPedigreeFunction: [0, 3]
+      Age: [0, 120]
+
+    target_allowed_values: [0, 1]
+
+    # Expectativas extras (mesmo padrão declarativo). kwargs mesclam com o batch no runtime.
+    extra_expectations: []
+
+  split:
+    classes:
+      column_to_exist: ExpectColumnToExist
+      column_values_in_set: ExpectColumnValuesToBeInSet
+      table_min_rows: ExpectTableRowCountToBeBetween
+    split_column_severity: critical
+    split_values_severity: critical
+    table_min_rows_critical_severity: critical
+    table_min_rows_warning_severity: warning
+    min_rows_per_split: 1
+    min_minority_ratio: 0.05
+    warn_when_split_rows_below: 5
+
+  freshness:
+    source_path: data/01_raw/diabetes-dataset-modelling.csv
+    warning_age_hours: 168
+    max_age_hours: 720
+
+  drift:
+    reference_split: train
+    compare_splits: [validation, test]
+    psi_bins: 10
+    stable_max: 0.10
+    moderate_max: 0.25

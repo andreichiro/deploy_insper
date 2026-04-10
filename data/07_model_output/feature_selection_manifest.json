@@ -1,0 +1,261 @@
+{
+  "manifest_type": "feature_selection",
+  "selection_scope": "per_model_family",
+  "enabled": true,
+  "selected_model_name": "optimized",
+  "selected_feature_names": [
+    "Glucose",
+    "BMI",
+    "DiabetesPedigreeFunction",
+    "Age"
+  ],
+  "selected_feature_names_text": "Glucose, BMI, DiabetesPedigreeFunction, Age",
+  "selected_feature_count": 4,
+  "selection_splits": [
+    "train"
+  ],
+  "primary_metric": "brier",
+  "secondary_metrics": [
+    "roc_auc",
+    "log_loss",
+    "calibration_slope_error",
+    "calibration_intercept_abs"
+  ],
+  "candidate_count": 957,
+  "selected_model_candidate_count": 319,
+  "selector_source": "candidate_model",
+  "per_model_manifests": {
+    "baseline": {
+      "manifest_type": "feature_selection",
+      "model_name": null,
+      "enabled": true,
+      "selection_splits": [
+        "train"
+      ],
+      "selector_model": {
+        "class_path": "sklearn.linear_model.LogisticRegression",
+        "init_args": {
+          "max_iter": 2000,
+          "class_weight": "balanced",
+          "solver": "liblinear",
+          "penalty": "l2",
+          "C": 1.0
+        }
+      },
+      "primary_metric": "brier",
+      "secondary_metrics": [
+        "roc_auc",
+        "log_loss",
+        "calibration_slope_error",
+        "calibration_intercept_abs"
+      ],
+      "candidate_count": 319,
+      "selected_candidate_id": 21,
+      "selected_block_names": [
+        "glucose_axis",
+        "bmi_axis"
+      ],
+      "selected_feature_names": [
+        "Glucose",
+        "BMI"
+      ],
+      "selected_feature_count": 2,
+      "selected_feature_names_text": "Glucose, BMI",
+      "best_primary_mean": 0.16637458743256608,
+      "selected_primary_mean": 0.17622262202890365,
+      "selected_primary_sem": 0.010267872398292782,
+      "selected_within_one_se": true,
+      "selection_policy": {
+        "prefer_fewer_features": true,
+        "one_standard_error_rule": true,
+        "candidate_generation": "exhaustive_feature_block_combinations",
+        "candidate_blocks": {
+          "pregnancies": [
+            "Pregnancies"
+          ],
+          "glucose_axis": [
+            "Glucose"
+          ],
+          "blood_pressure_axis": [
+            "BloodPressure"
+          ],
+          "skin_thickness_axis": [
+            "SkinThickness"
+          ],
+          "insulin_axis": [
+            "Insulin"
+          ],
+          "bmi_axis": [
+            "BMI"
+          ],
+          "pedigree_axis": [
+            "DiabetesPedigreeFunction"
+          ],
+          "age_axis": [
+            "Age"
+          ],
+          "glucose_bmi_signal": [
+            "glucose_bmi_interaction"
+          ]
+        }
+      }
+    },
+    "optimized": {
+      "manifest_type": "feature_selection",
+      "model_name": null,
+      "enabled": true,
+      "selection_splits": [
+        "train"
+      ],
+      "selector_model": {
+        "class_path": "catboost.CatBoostClassifier",
+        "init_args": {
+          "iterations": 200,
+          "depth": 4,
+          "learning_rate": 0.05,
+          "verbose": 0,
+          "auto_class_weights": "Balanced"
+        }
+      },
+      "primary_metric": "brier",
+      "secondary_metrics": [
+        "roc_auc",
+        "log_loss",
+        "calibration_slope_error",
+        "calibration_intercept_abs"
+      ],
+      "candidate_count": 319,
+      "selected_candidate_id": 179,
+      "selected_block_names": [
+        "glucose_axis",
+        "bmi_axis",
+        "pedigree_axis",
+        "age_axis"
+      ],
+      "selected_feature_names": [
+        "Glucose",
+        "BMI",
+        "DiabetesPedigreeFunction",
+        "Age"
+      ],
+      "selected_feature_count": 4,
+      "selected_feature_names_text": "Glucose, BMI, DiabetesPedigreeFunction, Age",
+      "best_primary_mean": 0.1555732778062396,
+      "selected_primary_mean": 0.1555732778062396,
+      "selected_primary_sem": 0.004845468257816818,
+      "selected_within_one_se": true,
+      "selection_policy": {
+        "prefer_fewer_features": true,
+        "one_standard_error_rule": true,
+        "candidate_generation": "exhaustive_feature_block_combinations",
+        "candidate_blocks": {
+          "pregnancies": [
+            "Pregnancies"
+          ],
+          "glucose_axis": [
+            "Glucose"
+          ],
+          "blood_pressure_axis": [
+            "BloodPressure"
+          ],
+          "skin_thickness_axis": [
+            "SkinThickness"
+          ],
+          "insulin_axis": [
+            "Insulin"
+          ],
+          "bmi_axis": [
+            "BMI"
+          ],
+          "pedigree_axis": [
+            "DiabetesPedigreeFunction"
+          ],
+          "age_axis": [
+            "Age"
+          ],
+          "glucose_bmi_signal": [
+            "glucose_bmi_interaction"
+          ]
+        }
+      }
+    },
+    "xgboost": {
+      "manifest_type": "feature_selection",
+      "model_name": null,
+      "enabled": true,
+      "selection_splits": [
+        "train"
+      ],
+      "selector_model": {
+        "class_path": "xgboost.XGBClassifier",
+        "init_args": {
+          "eval_metric": "logloss",
+          "verbosity": 0,
+          "scale_pos_weight": "auto",
+          "n_estimators": 200,
+          "max_depth": 4,
+          "learning_rate": 0.05
+        }
+      },
+      "primary_metric": "brier",
+      "secondary_metrics": [
+        "roc_auc",
+        "log_loss",
+        "calibration_slope_error",
+        "calibration_intercept_abs"
+      ],
+      "candidate_count": 319,
+      "selected_candidate_id": 83,
+      "selected_block_names": [
+        "glucose_axis",
+        "bmi_axis",
+        "age_axis"
+      ],
+      "selected_feature_names": [
+        "Glucose",
+        "BMI",
+        "Age"
+      ],
+      "selected_feature_count": 3,
+      "selected_feature_names_text": "Glucose, BMI, Age",
+      "best_primary_mean": 0.17147872121261226,
+      "selected_primary_mean": 0.1771533333797058,
+      "selected_primary_sem": 0.008254962699853215,
+      "selected_within_one_se": true,
+      "selection_policy": {
+        "prefer_fewer_features": true,
+        "one_standard_error_rule": true,
+        "candidate_generation": "exhaustive_feature_block_combinations",
+        "candidate_blocks": {
+          "pregnancies": [
+            "Pregnancies"
+          ],
+          "glucose_axis": [
+            "Glucose"
+          ],
+          "blood_pressure_axis": [
+            "BloodPressure"
+          ],
+          "skin_thickness_axis": [
+            "SkinThickness"
+          ],
+          "insulin_axis": [
+            "Insulin"
+          ],
+          "bmi_axis": [
+            "BMI"
+          ],
+          "pedigree_axis": [
+            "DiabetesPedigreeFunction"
+          ],
+          "age_axis": [
+            "Age"
+          ],
+          "glucose_bmi_signal": [
+            "glucose_bmi_interaction"
+          ]
+        }
+      }
+    }
+  }
+}

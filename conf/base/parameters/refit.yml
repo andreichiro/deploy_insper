@@ -1,0 +1,21 @@
+refit_fit_transform:
+  split_to_fit:
+    - train
+    - validation
+    - test
+
+refit_model:
+  class_path: catboost.CatBoostClassifier
+  train_splits:
+    - train
+    - validation
+    - test
+  init_args:
+    verbose: 0
+
+calibration:
+  enabled: true
+  class_path: sklearn.calibration.CalibratedClassifierCV
+  init_args:
+    method: sigmoid
+    cv: 5

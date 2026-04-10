@@ -1,0 +1,159 @@
+{
+  "manifest_type": "serving_manifest",
+  "generated_at": "2026-04-10T01:46:05.264940+00:00",
+  "registry_id": "abcd8552-1a6c-497a-90ae-cbad12d5e490",
+  "created_at": "2026-04-10T01:46:05.257107+00:00",
+  "stage": "production",
+  "class_path": "catboost.CatBoostClassifier",
+  "train_splits": [
+    "train",
+    "validation",
+    "test"
+  ],
+  "decision_policy_name": "prioritize_recall",
+  "decision_policy_description": "Pol\u00edtica cl\u00ednica que reduz falsos negativos mesmo aceitando mais falsos positivos.",
+  "decision_threshold": 0.15000000000000002,
+  "risk_bands": [
+    {
+      "name": "low",
+      "label": "Baixo risco",
+      "min_probability": 0.0,
+      "max_probability": 0.3
+    },
+    {
+      "name": "moderate",
+      "label": "Risco moderado",
+      "min_probability": 0.3,
+      "max_probability": 0.55
+    },
+    {
+      "name": "high",
+      "label": "Alto risco",
+      "min_probability": 0.55,
+      "max_probability": 0.75
+    },
+    {
+      "name": "critical",
+      "label": "Risco critico",
+      "min_probability": 0.75,
+      "max_probability": 1.01
+    }
+  ],
+  "policy_catalog": [
+    {
+      "model_name": "optimized",
+      "split": "validation",
+      "policy_name": "default_050",
+      "policy_label": "Threshold 0.50",
+      "policy_description": "Classifica\u00e7\u00e3o padr\u00e3o com cutoff de 50%.",
+      "strategy": "fixed_threshold",
+      "constraint_satisfied": true,
+      "tn": 49,
+      "fp": 14,
+      "fn": 14,
+      "tp": 21,
+      "threshold": 0.5,
+      "accuracy": 0.7142857142857143,
+      "precision": 0.6,
+      "recall": 0.6,
+      "specificity": 0.7777777777777778,
+      "f1": 0.6,
+      "false_positive_rate": 0.2222222222222222,
+      "false_negative_rate": 0.4,
+      "positive_prediction_rate": 0.35714285714285715,
+      "positive_prevalence": 0.35714285714285715,
+      "tn_share": 0.5,
+      "fp_share": 0.14285714285714285,
+      "fn_share": 0.14285714285714285,
+      "tp_share": 0.21428571428571427,
+      "mean_risk_score": 0.3717881461810201,
+      "expected_cost": 28.0
+    },
+    {
+      "model_name": "optimized",
+      "split": "validation",
+      "policy_name": "prioritize_recall",
+      "policy_label": "Priorizar recall",
+      "policy_description": "Pol\u00edtica cl\u00ednica que reduz falsos negativos mesmo aceitando mais falsos positivos.",
+      "strategy": "min_expected_cost",
+      "constraint_satisfied": true,
+      "tn": 30,
+      "fp": 33,
+      "fn": 3,
+      "tp": 32,
+      "threshold": 0.15000000000000002,
+      "accuracy": 0.6326530612244898,
+      "precision": 0.49230769230769234,
+      "recall": 0.9142857142857143,
+      "specificity": 0.47619047619047616,
+      "f1": 0.64,
+      "false_positive_rate": 0.5238095238095238,
+      "false_negative_rate": 0.08571428571428572,
+      "positive_prediction_rate": 0.6632653061224489,
+      "positive_prevalence": 0.35714285714285715,
+      "tn_share": 0.30612244897959184,
+      "fp_share": 0.336734693877551,
+      "fn_share": 0.030612244897959183,
+      "tp_share": 0.32653061224489793,
+      "mean_risk_score": 0.3717881461810201,
+      "expected_cost": 57.0
+    },
+    {
+      "model_name": "optimized",
+      "split": "validation",
+      "policy_name": "prioritize_precision",
+      "policy_label": "Priorizar precision",
+      "policy_description": "Pol\u00edtica conservadora que reduz alertas falsos, aceitando mais risco de falso negativo.",
+      "strategy": "min_expected_cost",
+      "constraint_satisfied": true,
+      "tn": 61,
+      "fp": 2,
+      "fn": 29,
+      "tp": 6,
+      "threshold": 0.8000000000000003,
+      "accuracy": 0.6836734693877551,
+      "precision": 0.75,
+      "recall": 0.17142857142857143,
+      "specificity": 0.9682539682539683,
+      "f1": 0.2790697674418604,
+      "false_positive_rate": 0.031746031746031744,
+      "false_negative_rate": 0.8285714285714286,
+      "positive_prediction_rate": 0.08163265306122448,
+      "positive_prevalence": 0.35714285714285715,
+      "tn_share": 0.6224489795918368,
+      "fp_share": 0.02040816326530612,
+      "fn_share": 0.29591836734693877,
+      "tp_share": 0.061224489795918366,
+      "mean_risk_score": 0.3717881461810201,
+      "expected_cost": 41.0
+    }
+  ],
+  "artifact_inventory": [
+    {
+      "path": "/Users/akatsurada/Documents/INSPER/deploy/aula_2/data/06_models/production_encoders.pkl",
+      "exists": true,
+      "size_bytes": 5,
+      "modified_at": "2026-04-10T01:33:00.397513+00:00"
+    },
+    {
+      "path": "/Users/akatsurada/Documents/INSPER/deploy/aula_2/data/06_models/production_scalers.pkl",
+      "exists": true,
+      "size_bytes": 2426,
+      "modified_at": "2026-04-10T01:33:00.916654+00:00"
+    },
+    {
+      "path": "/Users/akatsurada/Documents/INSPER/deploy/aula_2/data/06_models/raw_production_model.pkl",
+      "exists": true,
+      "size_bytes": 67487,
+      "modified_at": "2026-04-10T01:46:04.982349+00:00"
+    },
+    {
+      "path": "/Users/akatsurada/Documents/INSPER/deploy/aula_2/data/06_models/production_model.pkl",
+      "exists": true,
+      "size_bytes": 198271,
+      "modified_at": "2026-04-10T01:46:05.167598+00:00"
+    }
+  ],
+  "registry_status": "persisted",
+  "registry_error": null
+}

@@ -1,0 +1,60 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - app-data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - KEDRO_LOGGING_CONFIG=/app/conf/logging.yml
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import sys, urllib.request; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:8000/health').status == 200 else sys.exit(1)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  dashboard:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - app-data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - KEDRO_LOGGING_CONFIG=/app/conf/logging.yml
+    entrypoint: ["./dashboard-entrypoint.sh"]
+    depends_on:
+      api:
+        condition: service_healthy
+
+  workspace:
+    build:
+      context: .
+      target: dev
+    profiles: ["dev"]
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+      - app-data:/workspace/data
+      - uv-cache:/root/.cache/uv
+    environment:
+      - PYTHONUNBUFFERED=1
+      - KEDRO_LOGGING_CONFIG=/workspace/conf/logging.yml
+    command:
+      [
+        "sh",
+        "-lc",
+        "/app/seed-data.sh /workspace/data && uv sync --project /workspace --frozen --extra dev && sleep infinity",
+      ]
+
+volumes:
+  app-data:
+  uv-cache:
