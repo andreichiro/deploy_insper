@@ -1,0 +1,6 @@
+calibration:
+  enabled: true
+  class_path: sklearn.calibration.CalibratedClassifierCV
+  init_args:
+    method: sigmoid
+    cv: 3

@@ -1,0 +1,233 @@
+random_state: 42
+
+baseline:
+  class_path: sklearn.linear_model.LogisticRegression
+  random_state: ${random_state}
+  train_splits:
+    - train
+  init_args:
+    max_iter: 3000
+    class_weight: balanced
+  feature_selection_selector:
+    class_path: sklearn.linear_model.LogisticRegression
+    init_args:
+      max_iter: 2000
+      class_weight: balanced
+      solver: liblinear
+      penalty: l2
+      C: 1.0
+  search_space:
+    solver_penalty_combo:
+      type: categorical
+      choices:
+        - l2__lbfgs
+        - l2__liblinear
+        - l2__saga
+        - l2__newton-cg
+        - l1__liblinear
+        - l1__saga
+        - elasticnet__saga
+        - none__lbfgs
+        - none__newton-cg
+        - none__saga
+    C:
+      type: float
+      low: 0.0005
+      high: 200.0
+      log: true
+      active_if:
+        solver_penalty_combo:
+          [
+            "l2__lbfgs",
+            "l2__liblinear",
+            "l2__saga",
+            "l2__newton-cg",
+            "l1__liblinear",
+            "l1__saga",
+            "elasticnet__saga",
+          ]
+    l1_ratio:
+      type: float
+      low: 0.05
+      high: 0.95
+      active_if:
+        solver_penalty_combo: ["elasticnet__saga"]
+    fit_intercept:
+      type: categorical
+      choices: [true, false]
+  n_trials: 6
+  cv: 5
+  optimization_objective: composite_probability_policy_score
+
+optimization:
+  class_path: catboost.CatBoostClassifier
+  random_state: ${random_state}
+  train_splits:
+    - train
+  init_args:
+    verbose: 0
+    auto_class_weights: Balanced
+  feature_selection_selector:
+    class_path: catboost.CatBoostClassifier
+    init_args:
+      iterations: 200
+      depth: 4
+      learning_rate: 0.05
+      verbose: 0
+      auto_class_weights: Balanced
+  search_space:
+    depth:
+      type: int
+      low: 3
+      high: 10
+    iterations:
+      type: int
+      low: 100
+      high: 500
+    learning_rate:
+      type: float
+      low: 0.01
+      high: 0.3
+      log: true
+    l2_leaf_reg:
+      type: float
+      low: 1.0
+      high: 20.0
+      log: true
+    random_strength:
+      type: float
+      low: 0.0
+      high: 5.0
+    bagging_temperature:
+      type: float
+      low: 0.0
+      high: 5.0
+    border_count:
+      type: int
+      low: 32
+      high: 255
+  n_trials: 6
+  cv: 5
+  optimization_objective: composite_probability_policy_score
+
+xgboost:
+  class_path: xgboost.XGBClassifier
+  random_state: ${random_state}
+  train_splits:
+    - train
+  init_args:
+    eval_metric: logloss
+    verbosity: 0
+    scale_pos_weight: auto
+  feature_selection_selector:
+    class_path: xgboost.XGBClassifier
+    init_args:
+      eval_metric: logloss
+      verbosity: 0
+      scale_pos_weight: auto
+      n_estimators: 200
+      max_depth: 4
+      learning_rate: 0.05
+  search_space:
+    n_estimators:
+      type: int
+      low: 100
+      high: 700
+    max_depth:
+      type: int
+      low: 2
+      high: 10
+    learning_rate:
+      type: float
+      low: 0.01
+      high: 0.3
+      log: true
+    min_child_weight:
+      type: int
+      low: 1
+      high: 10
+    subsample:
+      type: float
+      low: 0.6
+      high: 1.0
+    colsample_bytree:
+      type: float
+      low: 0.6
+      high: 1.0
+    reg_alpha:
+      type: float
+      low: 0.0
+      high: 10.0
+    reg_lambda:
+      type: float
+      low: 0.5
+      high: 20.0
+      log: true
+    gamma:
+      type: float
+      low: 0.0
+      high: 5.0
+  n_trials: 6
+  cv: 5
+  optimization_objective: composite_probability_policy_score
+
+nested_cv_audit:
+  enabled: false
+  development_splits:
+    - train
+    - validation
+  outer_folds: 3
+  validation_fraction: 0.25
+  random_state: ${random_state}
+  trial_scaling: 0.20
+  min_trials: 3
+
+sensitivity_audit:
+  split: validation
+  sample_size: 32
+  random_state: ${random_state}
+  perturbation_percents: [0.05, 0.10, 0.20]
+  min_baseline_abs: 1.0
+  insensitive_max_ratio: 0.10
+  overreactive_min_ratio: 1.00
+
+bootstrap_confidence_intervals:
+  split: validation
+  iterations: 48
+  random_state: ${random_state}
+  confidence_level: 0.95
+  metrics:
+    - roc_auc
+    - brier
+    - log_loss
+    - recall
+    - precision
+    - f1
+    - false_negative_rate
+    - false_positive_rate
+    - expected_cost
+    - calibration_slope_error
+    - calibration_intercept_abs
+
+permutation_importance:
+  split: validation
+  repeats: 4
+  random_state: ${random_state}
+  metrics:
+    - roc_auc
+    - brier
+    - log_loss
+    - recall
+    - expected_cost
+  feature_groups:
+    baseline_clinical:
+      - Pregnancies
+      - Glucose
+      - BloodPressure
+      - SkinThickness
+      - Insulin
+      - BMI
+      - DiabetesPedigreeFunction
+      - Age
+    engineered_signals:
+      - glucose_bmi_interaction

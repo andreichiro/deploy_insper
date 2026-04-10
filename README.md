@@ -10,8 +10,11 @@ locked Python dependencies, Docker setup, and the data/artifacts needed to boot 
 
 - application code in `src/`
 - shared Kedro configuration in `conf/base/`
+- CI/test Kedro config in `conf/ci/`
 - raw input files in `data/01_raw/`
 - current production artifacts and reporting outputs in `data/`
+- tests in `tests/`
+- docs in `docs/`
 - reproducible container setup with `Dockerfile`, `docker-compose.yml`, and entrypoint scripts
 - locked dependencies via `pyproject.toml` and `uv.lock`
 
@@ -23,6 +26,7 @@ locked Python dependencies, Docker setup, and the data/artifacts needed to boot 
 uv sync
 uv run uvicorn insper_deploy_kedro.api:app --host 0.0.0.0 --port 8000
 uv run streamlit run src/insper_deploy_kedro/dashboard.py
+uv run --extra dev pytest
 ```
 
 ### Docker

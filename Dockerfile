@@ -29,6 +29,9 @@ FROM base AS dev
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH="/opt/venv/bin:${PATH}"
 
+COPY docs/ docs/
+COPY tests/ tests/
+COPY conf/ci/ conf/ci/
 RUN uv sync --frozen --extra dev
 RUN mkdir -p /workspace && cp -R /app/. /workspace/
 
