@@ -592,6 +592,40 @@ class TestModelDiagnostics:
         }.issubset(importance.columns)
         assert set(importance["policy_threshold"]) == {0.2}
 
+    def test_build_permutation_feature_importance_uses_selected_policy_threshold(
+        self,
+        master_table,
+        columns_config,
+        trained_model,
+        decision_policy_config,
+    ):
+        importance = build_permutation_feature_importance(
+            {
+                "class_path": trained_model["class_path"],
+                "init_args": trained_model["init_args"],
+            },
+            trained_model,
+            trained_model,
+            trained_model,
+            master_table,
+            columns_config,
+            decision_policy_config,
+            {
+                "decision_policy_name": "default_050",
+                "decision_threshold": 0.2,
+            },
+            {
+                "split": "train",
+                "repeats": 2,
+                "random_state": 42,
+                "metrics": ["roc_auc"],
+            },
+        )
+
+        assert not importance.empty
+        assert set(importance["policy_name"]) == {"default_050"}
+        assert set(importance["policy_threshold"]) == {0.2}
+
     def test_build_perturbation_sensitivity_audit_returns_rows(
         self,
         master_table,
