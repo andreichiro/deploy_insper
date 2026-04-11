@@ -1,5 +1,7 @@
 # Deploy de Predição de Diabetes
 
+Trabalho individual: André Ichiro Katsurada
+
 [![Powered by Kedro](https://img.shields.io/badge/powered_by-kedro-ffc900?logo=kedro)](https://kedro.org)
 
 Repositório standalone de deploy da aplicação de predição de diabetes. Ele reúne o projeto Kedro pronto para produção, a API FastAPI, o dashboard Streamlit, a configuração declarativa em YAML, as dependências travadas com `uv`, o setup Docker e os artefatos necessários para subir a stack imediatamente.
