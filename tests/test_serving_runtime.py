@@ -9,8 +9,10 @@ import pandas as pd
 from insper_deploy_kedro import serving_runtime
 
 
-def test_load_production_artifacts_requires_all_three_datasets():
+def test_load_production_artifacts_requires_all_production_datasets():
     expected = {
+        "imputers": {"Glucose": "imputer"},
+        "outlier_cappers": {"thresholds": {"Insulin": (0.0, 200.0)}},
         "encoders": {"age": "encoder"},
         "scalers": {"glucose": "scaler"},
         "model": {"class_path": "sklearn.linear_model.LogisticRegression"},
@@ -18,6 +20,8 @@ def test_load_production_artifacts_requires_all_three_datasets():
 
     def fake_load(dataset_name: str):
         mapping = {
+            "production_imputers": expected["imputers"],
+            "production_outlier_cappers": expected["outlier_cappers"],
             "production_encoders": expected["encoders"],
             "production_scalers": expected["scalers"],
             "production_model": expected["model"],
@@ -68,6 +72,8 @@ def test_get_production_status_returns_false_when_model_artifact_shape_is_invali
         serving_runtime,
         "load_production_artifacts",
         return_value={
+            "imputers": {"Glucose": "imputer"},
+            "outlier_cappers": {"thresholds": {"Insulin": (0.0, 200.0)}},
             "encoders": {"age": "encoder"},
             "scalers": {"glucose": "scaler"},
             "model": "not-a-dict",
@@ -83,6 +89,8 @@ def test_get_production_status_returns_false_when_scalers_are_invalid():
         serving_runtime,
         "load_production_artifacts",
         return_value={
+            "imputers": {"Glucose": "imputer"},
+            "outlier_cappers": {"thresholds": {"Insulin": (0.0, 200.0)}},
             "encoders": {"age": "encoder"},
             "scalers": "not-a-dict",
             "model": {"class_path": "catboost.CatBoostClassifier"},
@@ -98,7 +106,25 @@ def test_get_production_status_returns_false_when_scalers_are_missing():
         serving_runtime,
         "load_production_artifacts",
         return_value={
+            "imputers": {"Glucose": "imputer"},
+            "outlier_cappers": {"thresholds": {"Insulin": (0.0, 200.0)}},
             "encoders": {"age": "encoder"},
+            "model": {"class_path": "catboost.CatBoostClassifier"},
+        },
+    ):
+        status = serving_runtime.get_production_status()
+
+    assert status == {"model_loaded": False, "model_version": None}
+
+
+def test_get_production_status_returns_false_when_imputers_are_missing():
+    with mock.patch.object(
+        serving_runtime,
+        "load_production_artifacts",
+        return_value={
+            "outlier_cappers": {"thresholds": {"Insulin": (0.0, 200.0)}},
+            "encoders": {"age": "encoder"},
+            "scalers": {"glucose": "scaler"},
             "model": {"class_path": "catboost.CatBoostClassifier"},
         },
     ):
@@ -112,6 +138,8 @@ def test_get_production_status_uses_model_version_only_when_all_artifacts_exist(
         serving_runtime,
         "load_production_artifacts",
         return_value={
+            "imputers": {"Glucose": "imputer"},
+            "outlier_cappers": {"thresholds": {"Insulin": (0.0, 200.0)}},
             "encoders": {"age": "encoder"},
             "scalers": {"glucose": "scaler"},
             "model": {"class_path": "catboost.CatBoostClassifier"},
@@ -253,9 +281,7 @@ def test_run_online_inference_runs_pipeline_in_memory():
         mock.patch.object(
             serving_runtime.KedroSession, "create", return_value=_Session()
         ),
-        mock.patch.object(
-            serving_runtime, "kedro_pipelines", {"inference": object()}
-        ),
+        mock.patch.object(serving_runtime, "kedro_pipelines", {"inference": object()}),
         mock.patch.object(
             serving_runtime.SequentialRunner,
             "run",
@@ -317,9 +343,7 @@ def test_run_online_inference_returns_full_risk_report_when_requested():
         mock.patch.object(
             serving_runtime.KedroSession, "create", return_value=_Session()
         ),
-        mock.patch.object(
-            serving_runtime, "kedro_pipelines", {"inference": object()}
-        ),
+        mock.patch.object(serving_runtime, "kedro_pipelines", {"inference": object()}),
         mock.patch.object(
             serving_runtime.SequentialRunner,
             "run",

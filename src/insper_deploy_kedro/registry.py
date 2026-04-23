@@ -29,6 +29,8 @@ def _now() -> str:
 def _artifact_inventory() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for dataset_name in (
+        "production_imputers.pkl",
+        "production_outlier_cappers.pkl",
         "production_encoders.pkl",
         "production_scalers.pkl",
         "raw_production_model.pkl",
@@ -129,9 +131,7 @@ def record_experiment_run(  # noqa: PLR0913
             "selection_score",
             selected_row.get(f"validation_{selection_metric}"),
         ),
-        "selected_policy_name": selected_deployment_policy.get(
-            "decision_policy_name"
-        ),
+        "selected_policy_name": selected_deployment_policy.get("decision_policy_name"),
         "selected_threshold": selected_deployment_policy.get("decision_threshold"),
         "best_model_config": best_model_config,
         "frontier": frontier_rows,
@@ -212,8 +212,7 @@ def build_training_run_manifest(  # noqa: PLR0913
         ),
         "modelling_design_audit": (
             modelling_design_audit.to_dict(orient="records")
-            if modelling_design_audit is not None
-            and not modelling_design_audit.empty
+            if modelling_design_audit is not None and not modelling_design_audit.empty
             else []
         ),
         "split_strategy_report": (
@@ -303,8 +302,7 @@ def build_inference_contract(
 ) -> dict[str, Any]:
     """Describe the runtime inference contract for API and dashboard consumers."""
     raw_input_names = raw_columns.get("categorical", []) + raw_columns.get(
-        "numerical",
-        []
+        "numerical", []
     )
     input_fields = []
     for field_name in raw_input_names:
@@ -337,6 +335,8 @@ def build_inference_contract(
         "risk_bands": list(production_model.get("risk_bands", [])),
         "pipeline_steps": [
             "clean_data",
+            "transform_zero_imputers",
+            "transform_outlier_cappers",
             "add_features",
             "transform_encoders",
             "transform_scalers",

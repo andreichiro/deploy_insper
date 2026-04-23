@@ -6,6 +6,7 @@ import warnings
 
 import pandas as pd
 
+from insper_deploy_kedro.pipelines.modelling import nodes as modelling_nodes
 from insper_deploy_kedro.pipelines.modelling.nodes import (
     build_bootstrap_metric_intervals,
     build_cv_fold_metrics,
@@ -218,7 +219,15 @@ class TestEvaluateModel:
             master_table, trained_model, columns_config, eval_params
         )
 
-        for key in ("accuracy", "precision", "recall", "f1", "roc_auc", "brier", "log_loss"):
+        for key in (
+            "accuracy",
+            "precision",
+            "recall",
+            "f1",
+            "roc_auc",
+            "brier",
+            "log_loss",
+        ):
             assert key in metrics
             assert 0.0 <= metrics[key] <= 1.0
 
@@ -406,6 +415,83 @@ class TestFeatureSelection:
             assert "Glucose" in selected_columns["numerical"]
             assert "BMI" in selected_columns["numerical"]
 
+    def test_stability_fold_winners_prioritize_primary_metric(self):
+        fold_results = pd.DataFrame(
+            [
+                {
+                    "candidate_id": 1,
+                    "fold_id": 1,
+                    "feature_count": 1,
+                    "brier": 0.30,
+                    "roc_auc": 0.80,
+                    "log_loss": 0.70,
+                    "calibration_slope_error": 0.20,
+                    "calibration_intercept_abs": 0.20,
+                },
+                {
+                    "candidate_id": 2,
+                    "fold_id": 1,
+                    "feature_count": 2,
+                    "brier": 0.20,
+                    "roc_auc": 0.70,
+                    "log_loss": 0.60,
+                    "calibration_slope_error": 0.10,
+                    "calibration_intercept_abs": 0.10,
+                },
+                {
+                    "candidate_id": 1,
+                    "fold_id": 2,
+                    "feature_count": 1,
+                    "brier": 0.31,
+                    "roc_auc": 0.81,
+                    "log_loss": 0.71,
+                    "calibration_slope_error": 0.21,
+                    "calibration_intercept_abs": 0.21,
+                },
+                {
+                    "candidate_id": 2,
+                    "fold_id": 2,
+                    "feature_count": 2,
+                    "brier": 0.19,
+                    "roc_auc": 0.69,
+                    "log_loss": 0.59,
+                    "calibration_slope_error": 0.09,
+                    "calibration_intercept_abs": 0.09,
+                },
+            ]
+        )
+        candidate_lookup = {
+            1: {
+                "block_names": ["glucose_axis"],
+                "feature_names": ["Glucose"],
+                "feature_names_text": "Glucose",
+            },
+            2: {
+                "block_names": ["glucose_axis", "bmi_axis"],
+                "feature_names": ["Glucose", "BMI"],
+                "feature_names_text": "Glucose, BMI",
+            },
+        }
+
+        stability = modelling_nodes._build_feature_selection_stability(
+            fold_results,
+            candidate_lookup,
+            primary_metric="brier",
+            secondary_metrics=["roc_auc", "log_loss"],
+            prefer_fewer_features=True,
+        )
+
+        candidate_row = stability[
+            (stability["entity_type"] == "candidate")
+            & (stability["entity_name"] == "Glucose, BMI")
+        ].iloc[0]
+        bmi_row = stability[
+            (stability["entity_type"] == "feature")
+            & (stability["entity_name"] == "BMI")
+        ].iloc[0]
+        assert candidate_row["winner_folds"] == 2
+        assert bmi_row["winner_folds"] == 2
+
 
 class TestModelDiagnostics:
     def test_build_model_selection_scorecard_returns_ranked_rows(
@@ -542,9 +628,13 @@ class TestModelDiagnostics:
         )
 
         assert not bootstrap.empty
-        assert {"metric_name", "ci_low", "ci_high", "ci_width", "bootstrap_samples"}.issubset(
-            bootstrap.columns
-        )
+        assert {
+            "metric_name",
+            "ci_low",
+            "ci_high",
+            "ci_width",
+            "bootstrap_samples",
+        }.issubset(bootstrap.columns)
         assert set(bootstrap["metric_name"]) == {"roc_auc", "brier", "expected_cost"}
         assert set(bootstrap["policy_threshold"]) == {0.2}
 

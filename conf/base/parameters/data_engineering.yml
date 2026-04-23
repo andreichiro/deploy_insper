@@ -15,7 +15,13 @@ raw_columns:
 columns:
   target:
     - Outcome
-  categorical: []
+  categorical:
+    - age_category
+    - bmi_category
+    - glucose_category
+    - age_bmi_category
+    - age_glucose_category
+    - insulin_category
   numerical:
     - Pregnancies
     - Glucose
@@ -26,6 +32,63 @@ columns:
     - DiabetesPedigreeFunction
     - Age
     - glucose_bmi_interaction
+    - glucose_insulin_interaction
+    - glucose_pregnancies_interaction
+  encoded_categorical:
+    - age_category_senior
+    - bmi_category_healthy
+    - bmi_category_overweight
+    - bmi_category_obese
+    - glucose_category_prediabetes
+    - glucose_category_diabetes
+    - age_bmi_category_underweight_senior
+    - age_bmi_category_healthy_mature
+    - age_bmi_category_healthy_senior
+    - age_bmi_category_overweight_mature
+    - age_bmi_category_overweight_senior
+    - age_bmi_category_obese_mature
+    - age_bmi_category_obese_senior
+    - age_glucose_category_low_senior
+    - age_glucose_category_normal_mature
+    - age_glucose_category_normal_senior
+    - age_glucose_category_hidden_mature
+    - age_glucose_category_hidden_senior
+    - age_glucose_category_high_mature
+    - age_glucose_category_high_senior
+    - insulin_category_abnormal
+  model_features:
+    - Pregnancies
+    - Glucose
+    - BloodPressure
+    - SkinThickness
+    - Insulin
+    - BMI
+    - DiabetesPedigreeFunction
+    - Age
+    - glucose_bmi_interaction
+    - glucose_insulin_interaction
+    - glucose_pregnancies_interaction
+    - age_category_senior
+    - bmi_category_healthy
+    - bmi_category_overweight
+    - bmi_category_obese
+    - glucose_category_prediabetes
+    - glucose_category_diabetes
+    - age_bmi_category_underweight_senior
+    - age_bmi_category_healthy_mature
+    - age_bmi_category_healthy_senior
+    - age_bmi_category_overweight_mature
+    - age_bmi_category_overweight_senior
+    - age_bmi_category_obese_mature
+    - age_bmi_category_obese_senior
+    - age_glucose_category_low_senior
+    - age_glucose_category_normal_mature
+    - age_glucose_category_normal_senior
+    - age_glucose_category_hidden_mature
+    - age_glucose_category_hidden_senior
+    - age_glucose_category_high_mature
+    - age_glucose_category_high_senior
+    - insulin_category_abnormal
 
 split_ratio:
   train: 0.7
@@ -50,12 +113,65 @@ preprocessing:
     description: >
       O projeto usa split estratificado aleatorio pela coluna target para manter
       a distribuicao da classe entre treino, validacao e teste.
+  zero_as_missing:
+    columns:
+      - Glucose
+      - BloodPressure
+      - SkinThickness
+      - Insulin
+      - BMI
+    scaler:
+      class_path: sklearn.preprocessing.RobustScaler
+      init_args: {}
+    imputer:
+      class_path: sklearn.impute.KNNImputer
+      init_args:
+        n_neighbors: 5
+        keep_empty_features: true
+  outlier_capping:
+    enabled: true
+    lower_quantile: 0.05
+    upper_quantile: 0.95
+    iqr_multiplier: 1.5
+    columns:
+      - Pregnancies
+      - Glucose
+      - BloodPressure
+      - SkinThickness
+      - Insulin
+      - BMI
+      - DiabetesPedigreeFunction
+      - Age
   categorical_encoder:
-    class_path: sklearn.preprocessing.OrdinalEncoder
+    class_path: sklearn.preprocessing.OneHotEncoder
     init_args:
-      handle_unknown: use_encoded_value
-      unknown_value: -1
-      dtype: int
+      handle_unknown: ignore
+      drop: first
+      sparse_output: false
+      dtype: float
+    category_orders:
+      age_category: [mature, senior]
+      bmi_category: [underweight, healthy, overweight, obese]
+      glucose_category: [normal, prediabetes, diabetes]
+      age_bmi_category:
+        - underweight_mature
+        - underweight_senior
+        - healthy_mature
+        - healthy_senior
+        - overweight_mature
+        - overweight_senior
+        - obese_mature
+        - obese_senior
+      age_glucose_category:
+        - low_mature
+        - low_senior
+        - normal_mature
+        - normal_senior
+        - hidden_mature
+        - hidden_senior
+        - high_mature
+        - high_senior
+      insulin_category: [normal, abnormal]
   numerical_scaler:
     class_path: sklearn.preprocessing.StandardScaler
     init_args: {}

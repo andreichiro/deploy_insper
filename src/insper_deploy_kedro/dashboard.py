@@ -135,6 +135,8 @@ def _artifact_signature(paths: list[Path]) -> tuple[tuple[str, int, int], ...]:
 def _production_artifact_fingerprint() -> tuple[tuple[str, int, int], ...]:
     return _artifact_signature(
         [
+            MODELS_DIR / "production_imputers.pkl",
+            MODELS_DIR / "production_outlier_cappers.pkl",
             MODELS_DIR / "production_encoders.pkl",
             MODELS_DIR / "production_scalers.pkl",
             MODELS_DIR / "production_model.pkl",

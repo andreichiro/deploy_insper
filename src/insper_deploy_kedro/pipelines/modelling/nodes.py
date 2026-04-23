@@ -58,7 +58,12 @@ def _get_feature_and_target_columns(
     columns: dict[str, list[str]],
 ) -> tuple[list[str], str]:
     """Extrai lista de features e nome da coluna target do config."""
-    feature_columns = columns["categorical"] + columns["numerical"]
+    if columns.get("model_features"):
+        feature_columns = list(columns["model_features"])
+    elif columns.get("encoded_categorical"):
+        feature_columns = list(columns["numerical"] + columns["encoded_categorical"])
+    else:
+        feature_columns = list(columns.get("categorical", []) + columns["numerical"])
     target_column = columns["target"][0]
     return feature_columns, target_column
 
@@ -118,9 +123,10 @@ def _fit_time_model_init_args(
     if class_path == "sklearn.linear_model.LogisticRegression":
         if resolved.get("penalty") == "none":
             resolved["penalty"] = None
-    if class_path.startswith("xgboost.") and str(
-        resolved.get("scale_pos_weight", "")
-    ).lower() == "auto":
+    if (
+        class_path.startswith("xgboost.")
+        and str(resolved.get("scale_pos_weight", "")).lower() == "auto"
+    ):
         if y_encoded is None:
             resolved["scale_pos_weight"] = 1.0
         else:
@@ -190,7 +196,9 @@ def _sample_search_params(
     if class_path == "sklearn.linear_model.LogisticRegression" and (
         "solver_penalty_combo" in params
     ):
-        penalty_name, solver_name = str(params.pop("solver_penalty_combo")).split("__", 1)
+        penalty_name, solver_name = str(params.pop("solver_penalty_combo")).split(
+            "__", 1
+        )
         params["penalty"] = penalty_name
         params["solver"] = solver_name
     return _fit_time_model_init_args(class_path, params)
@@ -204,7 +212,9 @@ def _resolve_calibration_cv(
     cv_value = cal_kwargs.get("cv", 5)
     if isinstance(cv_value, str):
         if cv_value.lower() == "prefit":
-            return max(_safe_n_splits(y_encoded, _MINIMUM_CV_SPLITS), _MINIMUM_CV_SPLITS)
+            return max(
+                _safe_n_splits(y_encoded, _MINIMUM_CV_SPLITS), _MINIMUM_CV_SPLITS
+            )
         return cv_value
     n_splits = _safe_n_splits(y_encoded, int(cv_value))
     return n_splits if n_splits >= _MINIMUM_CV_SPLITS else None
@@ -236,10 +246,14 @@ def _fit_estimator_with_optional_calibration(
         estimator = model_class(**resolved_init_args)
         with _suppress_known_training_warnings():
             estimator.fit(x_train, y_train)
-        return estimator, resolved_init_args, {
-            "enabled": False,
-            "reason": "insufficient_class_support_for_calibration",
-        }
+        return (
+            estimator,
+            resolved_init_args,
+            {
+                "enabled": False,
+                "reason": "insufficient_class_support_for_calibration",
+            },
+        )
 
     calibration_kwargs["cv"] = calibration_cv
     calibration_class = load_class(calibration_class_path)
@@ -249,11 +263,15 @@ def _fit_estimator_with_optional_calibration(
     )
     with _suppress_known_training_warnings():
         calibrated_estimator.fit(x_train, y_train)
-    return calibrated_estimator, resolved_init_args, {
-        "enabled": True,
-        "class_path": calibration_class_path,
-        "init_args": calibration_kwargs,
-    }
+    return (
+        calibrated_estimator,
+        resolved_init_args,
+        {
+            "enabled": True,
+            "class_path": calibration_class_path,
+            "init_args": calibration_kwargs,
+        },
+    )
 
 
 @contextmanager
@@ -289,7 +307,11 @@ def _confusion_counts(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, int]:
 
 
 def _clip_probabilities(probabilities: np.ndarray) -> np.ndarray:
-    return np.clip(np.asarray(probabilities, dtype=float), _PROBABILITY_EPSILON, 1.0 - _PROBABILITY_EPSILON)
+    return np.clip(
+        np.asarray(probabilities, dtype=float),
+        _PROBABILITY_EPSILON,
+        1.0 - _PROBABILITY_EPSILON,
+    )
 
 
 def _calibration_metrics(
@@ -563,7 +585,9 @@ def _active_deployment_policy(
     decision_policy_params: dict[str, Any],
 ) -> tuple[str, dict[str, Any]]:
     policy_name = decision_policy_params.get("deployment_policy", "default_050")
-    policy_cfg = dict((decision_policy_params.get("policies") or {}).get(policy_name, {}))
+    policy_cfg = dict(
+        (decision_policy_params.get("policies") or {}).get(policy_name, {})
+    )
     return str(policy_name), policy_cfg
 
 
@@ -670,7 +694,9 @@ def _selection_component_value(
     validation_payload: dict[str, Any],
     policy_payload: dict[str, Any],
 ) -> float | None:
-    payload = validation_payload if component["source"] == "validation" else policy_payload
+    payload = (
+        validation_payload if component["source"] == "validation" else policy_payload
+    )
     return payload.get(component["metric"])
 
 
@@ -687,9 +713,13 @@ def _selection_composite_score(
 
     for component in components:
         column_name = _selection_component_column(component)
-        raw_value = _selection_component_value(component, validation_payload, policy_payload)
+        raw_value = _selection_component_value(
+            component, validation_payload, policy_payload
+        )
         raw_map[column_name] = (
-            float(raw_value) if raw_value is not None and not pd.isna(raw_value) else float("nan")
+            float(raw_value)
+            if raw_value is not None and not pd.isna(raw_value)
+            else float("nan")
         )
         utility = _component_utility(
             component["metric"],
@@ -743,7 +773,9 @@ def _selection_payloads(
         false_negative_cost=false_negative_cost,
         false_positive_cost=false_positive_cost,
     )
-    validation_payload["selection_policy_threshold"] = float(selected_policy["threshold"])
+    validation_payload["selection_policy_threshold"] = float(
+        selected_policy["threshold"]
+    )
     validation_payload["selection_policy_name"] = policy_name
     validation_payload["selection_policy_label"] = selected_policy.get(
         "policy_label",
@@ -864,7 +896,9 @@ def _build_feature_selection_blocks(
     feature_order, _target = _get_feature_and_target_columns(columns)
     configured_blocks = feature_selection_params.get("feature_blocks") or {}
     if not configured_blocks:
-        return feature_order, {feature_name: [feature_name] for feature_name in feature_order}
+        return feature_order, {
+            feature_name: [feature_name] for feature_name in feature_order
+        }
 
     blocks: dict[str, list[str]] = {}
     known_features = set(feature_order)
@@ -889,17 +923,23 @@ def _build_feature_selector_estimator(
     selector_source = str(feature_selection_params.get("selector_source", "explicit"))
     selector_cfg: dict[str, Any]
     if selector_source == "candidate_model" and selector_model_params is not None:
-        selector_cfg = dict(selector_model_params.get("feature_selection_selector") or {})
+        selector_cfg = dict(
+            selector_model_params.get("feature_selection_selector") or {}
+        )
         if "class_path" not in selector_cfg:
             selector_cfg["class_path"] = selector_model_params.get(
                 "class_path",
                 "sklearn.linear_model.LogisticRegression",
             )
         if "init_args" not in selector_cfg:
-            selector_cfg["init_args"] = dict(selector_model_params.get("init_args") or {})
+            selector_cfg["init_args"] = dict(
+                selector_model_params.get("init_args") or {}
+            )
     else:
         selector_cfg = dict(feature_selection_params.get("selector_model") or {})
-    class_path = selector_cfg.get("class_path", "sklearn.linear_model.LogisticRegression")
+    class_path = selector_cfg.get(
+        "class_path", "sklearn.linear_model.LogisticRegression"
+    )
     model_class = load_class(class_path)
     return model_class(
         **_fit_time_model_init_args(class_path, selector_cfg.get("init_args"), y_train)
@@ -937,8 +977,7 @@ def _feature_selection_metrics(
     )
     if unsupported:
         raise ValueError(
-            "feature_selection_unsupported_metrics:"
-            + ",".join(unsupported)
+            "feature_selection_unsupported_metrics:" + ",".join(unsupported)
         )
     return primary_metric, secondary_metrics
 
@@ -950,12 +989,18 @@ def _feature_selection_cv(
 ) -> Any | None:
     cv_cfg = ml_runtime["cross_validation"]
     cv_overrides = dict(feature_selection_params.get("cv") or {})
-    desired_splits = int(cv_overrides.pop("n_splits", cv_cfg.get("init_args", {}).get("n_splits", 5)))
+    desired_splits = int(
+        cv_overrides.pop("n_splits", cv_cfg.get("init_args", {}).get("n_splits", 5))
+    )
     n_splits = _safe_n_splits(y_encoded, desired_splits)
     if n_splits < _MINIMUM_CV_SPLITS:
         return None
     cv_class = load_class(cv_cfg["class_path"])
-    cv_kwargs = {**dict(cv_cfg.get("init_args") or {}), **cv_overrides, "n_splits": n_splits}
+    cv_kwargs = {
+        **dict(cv_cfg.get("init_args") or {}),
+        **cv_overrides,
+        "n_splits": n_splits,
+    }
     return cv_class(**cv_kwargs)
 
 
@@ -994,7 +1039,9 @@ def _enumerate_feature_selection_candidates(
                 f"feature_selection_unknown_required_children:{block_name}:{unknown_children}"
             )
 
-    free_blocks = [block_name for block_name in block_names if block_name not in always_include]
+    free_blocks = [
+        block_name for block_name in block_names if block_name not in always_include
+    ]
     min_blocks = int(feature_selection_params.get("min_blocks", 1))
     max_blocks = int(feature_selection_params.get("max_blocks", len(block_names)))
     min_free = max(0, min_blocks - len(always_include))
@@ -1034,7 +1081,10 @@ def _enumerate_feature_selection_candidates(
             feature_names = [
                 feature_name
                 for feature_name in feature_order
-                if any(feature_name in feature_blocks[block_name] for block_name in block_combo)
+                if any(
+                    feature_name in feature_blocks[block_name]
+                    for block_name in block_combo
+                )
             ]
             if not feature_names:
                 continue
@@ -1072,9 +1122,7 @@ def _feature_selection_sort_key(
             ordering.append(float("inf"))
             continue
         ordering.append(
-            -value
-            if _feature_selection_metric_is_higher_better(metric_name)
-            else value
+            -value if _feature_selection_metric_is_higher_better(metric_name) else value
         )
     primary_value = float(row.get(f"mean_{primary_metric}", np.nan))
     ordering.append(
@@ -1082,6 +1130,37 @@ def _feature_selection_sort_key(
         if _feature_selection_metric_is_higher_better(primary_metric)
         else primary_value
     )
+    ordering.append(int(row["candidate_id"]))
+    return tuple(ordering)
+
+
+def _feature_selection_fold_winner_sort_key(
+    row: pd.Series,
+    primary_metric: str,
+    secondary_metrics: list[str],
+    prefer_fewer_features: bool,
+) -> tuple[Any, ...]:
+    """Rank per-fold winners by metric first; use parsimony only as a tie-breaker."""
+    ordering: list[Any] = []
+    primary_value = float(row.get(primary_metric, np.nan))
+    if pd.isna(primary_value):
+        ordering.append(float("inf"))
+    else:
+        ordering.append(
+            -primary_value
+            if _feature_selection_metric_is_higher_better(primary_metric)
+            else primary_value
+        )
+    if prefer_fewer_features:
+        ordering.append(int(row["feature_count"]))
+    for metric_name in secondary_metrics:
+        value = float(row.get(metric_name, np.nan))
+        if pd.isna(value):
+            ordering.append(float("inf"))
+            continue
+        ordering.append(
+            -value if _feature_selection_metric_is_higher_better(metric_name) else value
+        )
     ordering.append(int(row["candidate_id"]))
     return tuple(ordering)
 
@@ -1144,15 +1223,13 @@ def _build_feature_selection_summary(
     best_mean = float(best_row[f"mean_{primary_metric}"])
     best_sem = float(best_row[f"sem_{primary_metric}"])
     if higher_is_better:
-        grouped["within_one_se"] = (
-            pd.to_numeric(grouped[f"mean_{primary_metric}"], errors="coerce")
-            >= (best_mean - best_sem)
-        )
+        grouped["within_one_se"] = pd.to_numeric(
+            grouped[f"mean_{primary_metric}"], errors="coerce"
+        ) >= (best_mean - best_sem)
     else:
-        grouped["within_one_se"] = (
-            pd.to_numeric(grouped[f"mean_{primary_metric}"], errors="coerce")
-            <= (best_mean + best_sem)
-        )
+        grouped["within_one_se"] = pd.to_numeric(
+            grouped[f"mean_{primary_metric}"], errors="coerce"
+        ) <= (best_mean + best_sem)
 
     candidate_pool = grouped[grouped["within_one_se"]].copy()
     if candidate_pool.empty:
@@ -1184,7 +1261,7 @@ def _build_feature_selection_stability(
     for _fold_id, group in fold_results.groupby("fold_id", sort=True):
         winner_index = min(
             group.index.tolist(),
-            key=lambda idx: _feature_selection_sort_key(
+            key=lambda idx: _feature_selection_fold_winner_sort_key(
                 group.loc[idx],
                 primary_metric=primary_metric,
                 secondary_metrics=secondary_metrics,
@@ -1307,7 +1384,9 @@ def select_feature_columns(  # noqa: PLR0913, PLR0915
 
     selector_source = str(feature_selection_params.get("selector_source", "explicit"))
     if selector_source == "candidate_model" and selector_model_params is not None:
-        selector_model = dict(selector_model_params.get("feature_selection_selector") or {})
+        selector_model = dict(
+            selector_model_params.get("feature_selection_selector") or {}
+        )
         selector_model.setdefault(
             "class_path",
             selector_model_params.get(
@@ -1408,6 +1487,12 @@ def select_feature_columns(  # noqa: PLR0913, PLR0915
             for feature_name in columns["numerical"]
             if feature_name in selected_features
         ],
+        "encoded_categorical": [
+            feature_name
+            for feature_name in columns.get("encoded_categorical", [])
+            if feature_name in selected_features
+        ],
+        "model_features": list(selected_features),
     }
     manifest = {
         "manifest_type": "feature_selection",
@@ -1567,7 +1652,9 @@ def optimize_model(  # noqa: PLR0913, PLR0915
 
     search_space = optimization_params.get("search_space", {})
     if not search_space:
-        trained_artifact = train_model(master_table, columns, optimization_params, ml_runtime)
+        trained_artifact = train_model(
+            master_table, columns, optimization_params, ml_runtime
+        )
         train_splits = list(optimization_params.get("train_splits", ["train"]))
         training_frame = master_table[master_table[SPLIT_COLUMN].isin(train_splits)]
         calibrated_estimator, resolved_init_args, calibration_state = (
@@ -1617,7 +1704,9 @@ def optimize_model(  # noqa: PLR0913, PLR0915
             "optimize_model: insufficient class support for CV on %s, using direct training",
             class_path,
         )
-        direct_artifact = train_model(master_table, columns, optimization_params, ml_runtime)
+        direct_artifact = train_model(
+            master_table, columns, optimization_params, ml_runtime
+        )
         calibrated_estimator, resolved_init_args, calibration_state = (
             _fit_estimator_with_optional_calibration(
                 class_path,
@@ -1697,7 +1786,9 @@ def optimize_model(  # noqa: PLR0913, PLR0915
             n_trials,
             class_path,
         )
-        fallback_artifact = train_model(master_table, columns, optimization_params, ml_runtime)
+        fallback_artifact = train_model(
+            master_table, columns, optimization_params, ml_runtime
+        )
         calibrated_estimator, resolved_init_args, calibration_state = (
             _fit_estimator_with_optional_calibration(
                 class_path,
@@ -1776,8 +1867,10 @@ def _metric_keys(evaluation_params: dict[str, Any]) -> list[str]:
 
 def _risk_band_label(probability: float, risk_bands: list[dict[str, Any]]) -> str:
     for band in risk_bands:
-        if float(band["min_probability"]) <= probability < float(
-            band["max_probability"]
+        if (
+            float(band["min_probability"])
+            <= probability
+            < float(band["max_probability"])
         ):
             return str(band["label"])
     return "Sem faixa"
@@ -1946,7 +2039,9 @@ def build_model_selection_scorecard(  # noqa: PLR0913
             "validation_r2": float(validation_metrics.get("r2", np.nan)),
             "validation_mape": float(validation_metrics.get("mape", np.nan)),
             "selection_split": split_name,
-            "selected_feature_count": int(len(model_artifact.get("feature_columns", []))),
+            "selected_feature_count": int(
+                len(model_artifact.get("feature_columns", []))
+            ),
             "selected_feature_names_text": ", ".join(
                 model_artifact.get("feature_columns", [])
             ),
@@ -2042,9 +2137,7 @@ def select_best_model(  # noqa: PLR0913
         best_row = model_selection_scorecard.iloc[0]
         best_name = str(best_row["model_name"])
         best_model, best_metrics = next(
-            (model, metrics)
-            for name, model, metrics in candidates
-            if name == best_name
+            (model, metrics) for name, model, metrics in candidates if name == best_name
         )
         selection_metric_label = str(
             best_row.get("selection_metric", "composite_probability_policy_score")
@@ -2159,12 +2252,16 @@ def build_feature_selection_bundle(  # noqa: PLR0913
         "selection_scope": "per_model_family",
         "enabled": True,
         "selected_model_name": selected_model_name,
-        "selected_feature_names": list(selected_manifest.get("selected_feature_names", [])),
+        "selected_feature_names": list(
+            selected_manifest.get("selected_feature_names", [])
+        ),
         "selected_feature_names_text": selected_manifest.get(
             "selected_feature_names_text",
             "",
         ),
-        "selected_feature_count": int(selected_manifest.get("selected_feature_count", 0)),
+        "selected_feature_count": int(
+            selected_manifest.get("selected_feature_count", 0)
+        ),
         "selection_splits": list(selected_manifest.get("selection_splits", [])),
         "primary_metric": selected_manifest.get("primary_metric"),
         "secondary_metrics": list(selected_manifest.get("secondary_metrics", [])),
@@ -2177,8 +2274,12 @@ def build_feature_selection_bundle(  # noqa: PLR0913
     }
     return (
         selected_feature_columns,
-        pd.concat(frontier_frames, ignore_index=True) if frontier_frames else pd.DataFrame(),
-        pd.concat(stability_frames, ignore_index=True) if stability_frames else pd.DataFrame(),
+        pd.concat(frontier_frames, ignore_index=True)
+        if frontier_frames
+        else pd.DataFrame(),
+        pd.concat(stability_frames, ignore_index=True)
+        if stability_frames
+        else pd.DataFrame(),
         aggregate_manifest,
     )
 
@@ -2480,8 +2581,12 @@ def build_bootstrap_metric_intervals(  # noqa: PLR0913
 ) -> pd.DataFrame:
     """Bootstrap confidence intervals for model probability and policy metrics."""
     _feature_columns, target_column = _get_feature_and_target_columns(columns)
-    split_name = bootstrap_ci_params.get("split", evaluation_params.get("split", "validation"))
-    split_frame = master_table[master_table[SPLIT_COLUMN] == split_name].reset_index(drop=True)
+    split_name = bootstrap_ci_params.get(
+        "split", evaluation_params.get("split", "validation")
+    )
+    split_frame = master_table[master_table[SPLIT_COLUMN] == split_name].reset_index(
+        drop=True
+    )
     if split_frame.empty:
         return pd.DataFrame()
 
@@ -2545,7 +2650,9 @@ def build_bootstrap_metric_intervals(  # noqa: PLR0913
             false_negative_cost=false_negative_cost,
             false_positive_cost=false_positive_cost,
         )
-        sample_values: dict[str, list[float]] = {metric_name: [] for metric_name in metric_names}
+        sample_values: dict[str, list[float]] = {
+            metric_name: [] for metric_name in metric_names
+        }
         rng = np.random.default_rng(random_state)
         sample_size = len(split_frame)
         for _ in range(iterations):
@@ -2612,7 +2719,9 @@ def build_permutation_feature_importance(  # noqa: PLR0913
         xgboost_model,
     )
     split_name = permutation_importance_params.get("split", "validation")
-    split_frame = master_table[master_table[SPLIT_COLUMN] == split_name].reset_index(drop=True)
+    split_frame = master_table[master_table[SPLIT_COLUMN] == split_name].reset_index(
+        drop=True
+    )
     if split_frame.empty:
         return pd.DataFrame()
 
@@ -2641,7 +2750,9 @@ def build_permutation_feature_importance(  # noqa: PLR0913
         if selected_deployment_policy
         else decision_policy_params.get("deployment_policy", "default_050")
     )
-    policy_cfg = dict((decision_policy_params.get("policies") or {}).get(policy_name, {}))
+    policy_cfg = dict(
+        (decision_policy_params.get("policies") or {}).get(policy_name, {})
+    )
     threshold = _diagnostic_policy_threshold(
         y_true,
         baseline_probabilities,
@@ -2665,14 +2776,18 @@ def build_permutation_feature_importance(  # noqa: PLR0913
     for feature_name in model_artifact["feature_columns"]:
         if feature_name not in features.columns:
             continue
-        metric_samples: dict[str, list[float]] = {metric_name: [] for metric_name in metric_names}
+        metric_samples: dict[str, list[float]] = {
+            metric_name: [] for metric_name in metric_names
+        }
         permuted_metric_values: dict[str, list[float]] = {
             metric_name: [] for metric_name in metric_names
         }
         for _ in range(repeats):
             take = rng.permutation(len(features))
             permuted_features = features.copy()
-            permuted_features.loc[:, feature_name] = features[feature_name].to_numpy()[take]
+            permuted_features.loc[:, feature_name] = features[feature_name].to_numpy()[
+                take
+            ]
             permuted_probabilities = _predict_scores(estimator, permuted_features)
             permuted_payload = _merged_metric_payload(
                 y_true,
@@ -2711,9 +2826,13 @@ def build_permutation_feature_importance(  # noqa: PLR0913
                     "feature_group": feature_group_map.get(feature_name, "ungrouped"),
                     "metric_name": metric_name,
                     "baseline_metric_value": float(baseline_payload[metric_name]),
-                    "permuted_metric_mean": float(np.mean(permuted_metric_values[metric_name])),
+                    "permuted_metric_mean": float(
+                        np.mean(permuted_metric_values[metric_name])
+                    ),
                     "importance_mean": importance_mean,
-                    "importance_std": float(np.std(samples, ddof=1)) if len(samples) > 1 else 0.0,
+                    "importance_std": float(np.std(samples, ddof=1))
+                    if len(samples) > 1
+                    else 0.0,
                     "permutation_repeats": int(len(samples)),
                     "positive_means_feature_helps_flag": int(importance_mean > 0.0),
                 }
@@ -2821,7 +2940,9 @@ def build_perturbation_sensitivity_audit(  # noqa: PLR0912, PLR0913, PLR0915
                     feature_min,
                     feature_max,
                 )
-                relative_change = np.abs(candidate_values - feature_values) / np.maximum(
+                relative_change = np.abs(
+                    candidate_values - feature_values
+                ) / np.maximum(
                     np.abs(feature_values),
                     min_baseline_abs,
                 )
@@ -2835,9 +2956,9 @@ def build_perturbation_sensitivity_audit(  # noqa: PLR0912, PLR0913, PLR0915
                 probability_delta = np.abs(
                     perturbed_probabilities - baseline_probabilities
                 )
-                sensitivity_ratio = probability_delta[valid_mask] / relative_change[
-                    valid_mask
-                ]
+                sensitivity_ratio = (
+                    probability_delta[valid_mask] / relative_change[valid_mask]
+                )
 
                 if len(sensitivity_ratio) == 0:
                     continue
@@ -3010,9 +3131,9 @@ def build_split_comparison_report(  # noqa: PLR0913
     rows: list[dict[str, Any]] = []
 
     for split_name in requested_splits:
-        split_frame = master_table[master_table[SPLIT_COLUMN] == split_name].reset_index(
-            drop=True
-        )
+        split_frame = master_table[
+            master_table[SPLIT_COLUMN] == split_name
+        ].reset_index(drop=True)
         if split_frame.empty:
             continue
         y_true = model_artifact["target_encoder"].transform(split_frame[target_column])
@@ -3118,7 +3239,9 @@ def build_nested_cv_audit(  # noqa: PLR0913, PLR0915
         outer_cv.split(development_frame[feature_columns], y_development),
         start=1,
     ):
-        outer_train_frame = development_frame.iloc[outer_train_idx].reset_index(drop=True)
+        outer_train_frame = development_frame.iloc[outer_train_idx].reset_index(
+            drop=True
+        )
         outer_test_frame = development_frame.iloc[outer_test_idx].reset_index(drop=True)
         inner_train_frame, inner_valid_frame = _split_outer_train_for_nested_audit(
             outer_train_frame,
@@ -3127,13 +3250,15 @@ def build_nested_cv_audit(  # noqa: PLR0913, PLR0915
             random_state=base_random_state + fold_id,
         )
         working_table = _build_working_split_table(inner_train_frame, inner_valid_frame)
-        baseline_selected_columns, _frontier, _stability, baseline_feature_manifest = select_feature_columns(
-            working_table,
-            columns,
-            ml_runtime,
-            feature_selection_params,
-            baseline_params,
-            "baseline",
+        baseline_selected_columns, _frontier, _stability, baseline_feature_manifest = (
+            select_feature_columns(
+                working_table,
+                columns,
+                ml_runtime,
+                feature_selection_params,
+                baseline_params,
+                "baseline",
+            )
         )
         baseline_model = optimize_model(
             working_table,
@@ -3150,7 +3275,12 @@ def build_nested_cv_audit(  # noqa: PLR0913, PLR0915
             baseline_selected_columns,
             {**evaluation_params, "split": "validation"},
         )
-        optimized_selected_columns, _frontier, _stability, optimized_feature_manifest = select_feature_columns(
+        (
+            optimized_selected_columns,
+            _frontier,
+            _stability,
+            optimized_feature_manifest,
+        ) = select_feature_columns(
             working_table,
             columns,
             ml_runtime,
@@ -3173,13 +3303,15 @@ def build_nested_cv_audit(  # noqa: PLR0913, PLR0915
             optimized_selected_columns,
             {**evaluation_params, "split": "validation"},
         )
-        xgboost_selected_columns, _frontier, _stability, xgboost_feature_manifest = select_feature_columns(
-            working_table,
-            columns,
-            ml_runtime,
-            feature_selection_params,
-            xgboost_params,
-            "xgboost",
+        xgboost_selected_columns, _frontier, _stability, xgboost_feature_manifest = (
+            select_feature_columns(
+                working_table,
+                columns,
+                ml_runtime,
+                feature_selection_params,
+                xgboost_params,
+                "xgboost",
+            )
         )
         xgboost_model = optimize_model(
             working_table,
@@ -3266,7 +3398,9 @@ def build_nested_cv_audit(  # noqa: PLR0913, PLR0915
             columns,
             calibration_params,
         )
-        selected_policy_name = str(selected_policy.get("decision_policy_name", "default_050"))
+        selected_policy_name = str(
+            selected_policy.get("decision_policy_name", "default_050")
+        )
         selected_policy_cfg = dict(
             (decision_policy_params.get("policies") or {}).get(selected_policy_name, {})
         )
@@ -3340,22 +3474,38 @@ def build_modelling_design_audit(  # noqa: PLR0913
     perturbation_sensitivity_summary: pd.DataFrame,
 ) -> pd.DataFrame:
     """Materialize config-level checks for leakage, circularity, and robustness coverage."""
-    raw_input_names = set(raw_columns.get("categorical", []) + raw_columns.get("numerical", []))
+    raw_input_names = set(
+        raw_columns.get("categorical", []) + raw_columns.get("numerical", [])
+    )
     selected_feature_names = set(
-        selected_feature_columns.get("categorical", [])
-        + selected_feature_columns.get("numerical", [])
+        selected_feature_columns.get(
+            "model_features",
+            selected_feature_columns.get("encoded_categorical", [])
+            + selected_feature_columns.get("categorical", [])
+            + selected_feature_columns.get("numerical", []),
+        )
     )
     target_names = set(columns.get("target", []))
-    derived_feature_names = set(
-        columns.get("categorical", []) + columns.get("numerical", [])
-    ) - raw_input_names
-    selection_splits = set((feature_selection_manifest or {}).get("selection_splits", []))
+    derived_feature_names = (
+        set(
+            columns.get("model_features", [])
+            or columns.get("encoded_categorical", [])
+            + columns.get("categorical", [])
+            + columns.get("numerical", [])
+        )
+        - raw_input_names
+    )
+    selection_splits = set(
+        (feature_selection_manifest or {}).get("selection_splits", [])
+    )
     candidate_count = int((feature_selection_manifest or {}).get("candidate_count", 0))
     refit_splits = set(model_selection_params.get("refit_train_splits", []))
     policy_selection_split = str(
         decision_policy_params.get("policy_selection_split", "validation")
     )
-    selected_engineered_features = sorted(selected_feature_names & derived_feature_names)
+    selected_engineered_features = sorted(
+        selected_feature_names & derived_feature_names
+    )
     rows = [
         {
             "check_name": "selected_features_exclude_target",
@@ -3384,17 +3534,25 @@ def build_modelling_design_audit(  # noqa: PLR0913
         },
         {
             "check_name": "test_reserved_until_refit",
-            "passed_flag": int("test" in refit_splits and policy_selection_split != "test"),
+            "passed_flag": int(
+                "test" in refit_splits and policy_selection_split != "test"
+            ),
             "detail": (
                 "The test split is excluded from selection/policy choice and only enters the final production refit."
             ),
         },
         {
             "check_name": "derived_features_declared_explicitly",
-            "passed_flag": int(set(selected_engineered_features).issubset(derived_feature_names)),
+            "passed_flag": int(
+                set(selected_engineered_features).issubset(derived_feature_names)
+            ),
             "detail": (
                 "Selected engineered features="
-                + (", ".join(selected_engineered_features) if selected_engineered_features else "none")
+                + (
+                    ", ".join(selected_engineered_features)
+                    if selected_engineered_features
+                    else "none"
+                )
             ),
         },
         {

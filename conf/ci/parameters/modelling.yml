@@ -209,6 +209,63 @@ bootstrap_confidence_intervals:
     - calibration_slope_error
     - calibration_intercept_abs
 
+feature_selection:
+  enabled: true
+  selection_splits:
+    - train
+  selector_source: candidate_model
+  cv:
+    n_splits: 2
+  primary_metric: brier
+  secondary_metrics:
+    - roc_auc
+    - log_loss
+    - calibration_slope_error
+    - calibration_intercept_abs
+  prefer_fewer_features: true
+  min_blocks: 1
+  max_blocks: 4
+  max_candidates: 32
+  feature_blocks:
+    pregnancies: [Pregnancies]
+    glucose_axis: [Glucose]
+    bmi_axis: [BMI]
+    age_axis: [Age]
+    engineered_continuous_signals:
+      - glucose_bmi_interaction
+      - glucose_insulin_interaction
+      - glucose_pregnancies_interaction
+    clinical_categorical_signals:
+      - age_category_senior
+      - bmi_category_healthy
+      - bmi_category_overweight
+      - bmi_category_obese
+      - glucose_category_prediabetes
+      - glucose_category_diabetes
+      - age_bmi_category_underweight_senior
+      - age_bmi_category_healthy_mature
+      - age_bmi_category_healthy_senior
+      - age_bmi_category_overweight_mature
+      - age_bmi_category_overweight_senior
+      - age_bmi_category_obese_mature
+      - age_bmi_category_obese_senior
+      - age_glucose_category_low_senior
+      - age_glucose_category_normal_mature
+      - age_glucose_category_normal_senior
+      - age_glucose_category_hidden_mature
+      - age_glucose_category_hidden_senior
+      - age_glucose_category_high_mature
+      - age_glucose_category_high_senior
+      - insulin_category_abnormal
+  required_blocks:
+    engineered_continuous_signals:
+      - glucose_axis
+      - bmi_axis
+    clinical_categorical_signals:
+      - glucose_axis
+      - bmi_axis
+      - age_axis
+
 permutation_importance:
   split: validation
   repeats: 4
@@ -231,3 +288,27 @@ permutation_importance:
       - Age
     engineered_signals:
       - glucose_bmi_interaction
+      - glucose_insulin_interaction
+      - glucose_pregnancies_interaction
+    clinical_categorical_signals:
+      - age_category_senior
+      - bmi_category_healthy
+      - bmi_category_overweight
+      - bmi_category_obese
+      - glucose_category_prediabetes
+      - glucose_category_diabetes
+      - age_bmi_category_underweight_senior
+      - age_bmi_category_healthy_mature
+      - age_bmi_category_healthy_senior
+      - age_bmi_category_overweight_mature
+      - age_bmi_category_overweight_senior
+      - age_bmi_category_obese_mature
+      - age_bmi_category_obese_senior
+      - age_glucose_category_low_senior
+      - age_glucose_category_normal_mature
+      - age_glucose_category_normal_senior
+      - age_glucose_category_hidden_mature
+      - age_glucose_category_hidden_senior
+      - age_glucose_category_high_mature
+      - age_glucose_category_high_senior
+      - insulin_category_abnormal

@@ -12,6 +12,14 @@ cleaned_data:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/cleaned_data.parquet
 
+imputed_data:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/imputed_data.parquet
+
+capped_data:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/capped_data.parquet
+
 featured_data:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/featured_data.parquet
@@ -19,6 +27,14 @@ featured_data:
 cleaned_inference:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/cleaned_inference.parquet
+
+imputed_inference:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/imputed_inference.parquet
+
+capped_inference:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/capped_inference.parquet
 
 featured_inference:
   type: pandas.ParquetDataset
@@ -32,6 +48,18 @@ split_data:
 encoded_data:
   type: pandas.ParquetDataset
   filepath: data/03_primary/encoded_data.parquet
+
+production_imputed_data:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/production_imputed_data.parquet
+
+production_capped_data:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/production_capped_data.parquet
+
+production_featured_data:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/production_featured_data.parquet
 
 production_encoded_data:
   type: pandas.ParquetDataset
@@ -59,6 +87,14 @@ encoders:
   type: pickle.PickleDataset
   filepath: data/06_models/encoders.pkl
 
+imputers:
+  type: pickle.PickleDataset
+  filepath: data/06_models/imputers.pkl
+
+outlier_cappers:
+  type: pickle.PickleDataset
+  filepath: data/06_models/outlier_cappers.pkl
+
 scalers:
   type: pickle.PickleDataset
   filepath: data/06_models/scalers.pkl
@@ -78,6 +114,14 @@ xgboost_model:
 production_encoders:
   type: pickle.PickleDataset
   filepath: data/06_models/production_encoders.pkl
+
+production_imputers:
+  type: pickle.PickleDataset
+  filepath: data/06_models/production_imputers.pkl
+
+production_outlier_cappers:
+  type: pickle.PickleDataset
+  filepath: data/06_models/production_outlier_cappers.pkl
 
 production_scalers:
   type: pickle.PickleDataset

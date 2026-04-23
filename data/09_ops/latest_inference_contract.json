@@ -1,6 +1,6 @@
 {
   "manifest_type": "inference_contract",
-  "generated_at": "2026-04-10T01:46:05.236138+00:00",
+  "generated_at": "2026-04-23T14:51:50.780833+00:00",
   "input_fields": [
     {
       "name": "Pregnancies",
@@ -57,7 +57,7 @@
     "test"
   ],
   "decision_policy_name": "prioritize_recall",
-  "decision_threshold": 0.15000000000000002,
+  "decision_threshold": 0.1,
   "risk_bands": [
     {
       "name": "low",
@@ -86,6 +86,8 @@
   ],
   "pipeline_steps": [
     "clean_data",
+    "transform_zero_imputers",
+    "transform_outlier_cappers",
     "add_features",
     "transform_encoders",
     "transform_scalers",

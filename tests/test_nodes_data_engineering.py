@@ -1,4 +1,4 @@
-"""Testes unitários dos nodes de DE """
+"""Testes unitários dos nodes de DE"""
 
 from __future__ import annotations
 
@@ -10,14 +10,47 @@ from insper_deploy_kedro.pipelines.data_engineering.nodes import (
     add_split_column,
     clean_data,
     fit_encoders,
+    fit_outlier_cappers,
     fit_scalers,
+    fit_zero_imputers,
     transform_encoders,
+    transform_outlier_cappers,
     transform_scalers,
+    transform_zero_imputers,
 )
 from insper_deploy_kedro.pipelines.data_engineering.validations import (
     validate_clean_data,
     validate_split_data,
 )
+
+
+def _prepare_featured_split(
+    sample_raw_data,
+    raw_columns_config,
+    split_ratio,
+    fit_transform_config,
+    preprocessing_config,
+    *,
+    stratify_column=None,
+) -> pd.DataFrame:
+    cleaned = clean_data(sample_raw_data, raw_columns_config)
+    split, _report = add_split_column(
+        cleaned,
+        split_ratio,
+        random_state=42,
+        stratify_column=stratify_column,
+        preprocessing=preprocessing_config,
+    )
+    imputers = fit_zero_imputers(split, fit_transform_config, preprocessing_config)
+    imputed = transform_zero_imputers(split, imputers)
+    outlier_cappers = fit_outlier_cappers(
+        imputed,
+        raw_columns_config,
+        fit_transform_config,
+        preprocessing_config,
+    )
+    capped = transform_outlier_cappers(imputed, outlier_cappers)
+    return add_features(capped)
 
 
 class TestCleanData:
@@ -45,7 +78,18 @@ class TestAddFeatures:
     def test_adds_derived_column(self, sample_raw_data, raw_columns_config):
         cleaned = clean_data(sample_raw_data, raw_columns_config)
         featured = add_features(cleaned)
-        assert "glucose_bmi_interaction" in featured.columns
+        expected_columns = {
+            "glucose_bmi_interaction",
+            "glucose_insulin_interaction",
+            "glucose_pregnancies_interaction",
+            "age_category",
+            "bmi_category",
+            "glucose_category",
+            "age_bmi_category",
+            "age_glucose_category",
+            "insulin_category",
+        }
+        assert expected_columns.issubset(featured.columns)
 
     def test_derived_column_is_numeric(self, sample_raw_data, raw_columns_config):
         cleaned = clean_data(sample_raw_data, raw_columns_config)
@@ -59,6 +103,18 @@ class TestAddFeatures:
         pd.testing.assert_series_equal(
             featured["glucose_bmi_interaction"], expected, check_names=False
         )
+
+    def test_clinical_categories_follow_configured_rules(
+        self, sample_raw_data, raw_columns_config
+    ):
+        cleaned = clean_data(sample_raw_data, raw_columns_config)
+        featured = add_features(cleaned)
+        assert featured.loc[0, "age_category"] == "senior"
+        assert featured.loc[1, "bmi_category"] == "overweight"
+        assert featured.loc[8, "glucose_category"] == "prediabetes"
+        assert featured.loc[0, "age_bmi_category"] == "obese_senior"
+        assert featured.loc[1, "age_glucose_category"] == "normal_mature"
+        assert featured.loc[3, "insulin_category"] == "normal"
 
 
 class TestAddSplitColumn:
@@ -90,9 +146,11 @@ class TestAddSplitColumn:
         )
         assert "split" in result.columns
         assert not report.empty
-        assert {"requested_strategy_kind", "resolved_strategy_kind", "split_name"}.issubset(
-            report.columns
-        )
+        assert {
+            "requested_strategy_kind",
+            "resolved_strategy_kind",
+            "split_name",
+        }.issubset(report.columns)
 
     def test_split_names_match_config(
         self,
@@ -179,7 +237,7 @@ class TestAddSplitColumn:
 
 
 class TestFitTransformEncoders:
-    def test_fit_returns_empty_dict_no_categoricals(
+    def test_fit_returns_one_encoder_per_engineered_categorical(
         self,
         sample_raw_data,
         raw_columns_config,
@@ -188,22 +246,20 @@ class TestFitTransformEncoders:
         fit_transform_config,
         preprocessing_config,
     ):
-        """Diabetes não tem colunas categóricas, então o dict de encoders fica vazio."""
-        cleaned = clean_data(sample_raw_data, raw_columns_config)
-        featured = add_features(cleaned)
-        split, _report = add_split_column(
-            featured,
+        split = _prepare_featured_split(
+            sample_raw_data,
+            raw_columns_config,
             split_ratio,
-            random_state=42,
-            stratify_column=None,
-            preprocessing=preprocessing_config,
+            fit_transform_config,
+            preprocessing_config,
         )
         encoders = fit_encoders(
             split, columns_config, fit_transform_config, preprocessing_config
         )
-        assert encoders == {}
+        assert set(encoders) == set(columns_config["categorical"])
+        assert encoders["age_category"]["output_columns"] == ["age_category_senior"]
 
-    def test_transform_is_noop_without_encoders(
+    def test_transform_creates_one_hot_columns(
         self,
         sample_raw_data,
         raw_columns_config,
@@ -212,20 +268,94 @@ class TestFitTransformEncoders:
         fit_transform_config,
         preprocessing_config,
     ):
-        cleaned = clean_data(sample_raw_data, raw_columns_config)
-        featured = add_features(cleaned)
-        split, _report = add_split_column(
-            featured,
+        split = _prepare_featured_split(
+            sample_raw_data,
+            raw_columns_config,
             split_ratio,
-            random_state=42,
-            stratify_column=None,
-            preprocessing=preprocessing_config,
+            fit_transform_config,
+            preprocessing_config,
         )
         encoders = fit_encoders(
             split, columns_config, fit_transform_config, preprocessing_config
         )
         encoded = transform_encoders(split, encoders)
+        assert set(columns_config["categorical"]).isdisjoint(encoded.columns)
+        assert set(columns_config["encoded_categorical"]).issubset(encoded.columns)
+        assert (
+            encoded[columns_config["encoded_categorical"]].isin([0.0, 1.0]).all().all()
+        )
+
+    def test_transform_is_noop_without_encoders(
+        self,
+        sample_raw_data,
+        raw_columns_config,
+        split_ratio,
+        fit_transform_config,
+        preprocessing_config,
+    ):
+        split = _prepare_featured_split(
+            sample_raw_data,
+            raw_columns_config,
+            split_ratio,
+            fit_transform_config,
+            preprocessing_config,
+        )
+        encoded = transform_encoders(split, {})
         pd.testing.assert_frame_equal(encoded, split)
+
+
+class TestFitTransformImputers:
+    def test_zero_as_missing_imputer_replaces_configured_zeros(
+        self,
+        sample_raw_data,
+        raw_columns_config,
+        split_ratio,
+        fit_transform_config,
+        preprocessing_config,
+    ):
+        cleaned = clean_data(sample_raw_data, raw_columns_config)
+        split, _report = add_split_column(
+            cleaned,
+            split_ratio,
+            random_state=42,
+            stratify_column=None,
+            preprocessing=preprocessing_config,
+        )
+        imputers = fit_zero_imputers(split, fit_transform_config, preprocessing_config)
+        imputed = transform_zero_imputers(split, imputers)
+        for column_name in preprocessing_config["zero_as_missing"]["columns"]:
+            assert not (imputed[column_name] == 0).any()
+
+
+class TestFitTransformOutlierCappers:
+    def test_outlier_capping_clips_using_fitted_thresholds(
+        self,
+        sample_raw_data,
+        raw_columns_config,
+        split_ratio,
+        fit_transform_config,
+        preprocessing_config,
+    ):
+        cleaned = clean_data(sample_raw_data, raw_columns_config)
+        split, _report = add_split_column(
+            cleaned,
+            split_ratio,
+            random_state=42,
+            stratify_column=None,
+            preprocessing=preprocessing_config,
+        )
+        imputers = fit_zero_imputers(split, fit_transform_config, preprocessing_config)
+        imputed = transform_zero_imputers(split, imputers)
+        cappers = fit_outlier_cappers(
+            imputed,
+            raw_columns_config,
+            fit_transform_config,
+            preprocessing_config,
+        )
+        capped = transform_outlier_cappers(imputed, cappers)
+        lower_limit, upper_limit = cappers["thresholds"]["Insulin"]
+        assert capped["Insulin"].max() <= upper_limit
+        assert capped["Insulin"].min() >= lower_limit
 
 
 class TestFitTransformScalers:
@@ -238,14 +368,12 @@ class TestFitTransformScalers:
         fit_transform_config,
         preprocessing_config,
     ):
-        cleaned = clean_data(sample_raw_data, raw_columns_config)
-        featured = add_features(cleaned)
-        split, _report = add_split_column(
-            featured,
+        split = _prepare_featured_split(
+            sample_raw_data,
+            raw_columns_config,
             split_ratio,
-            random_state=42,
-            stratify_column=None,
-            preprocessing=preprocessing_config,
+            fit_transform_config,
+            preprocessing_config,
         )
         encoders = fit_encoders(
             split, columns_config, fit_transform_config, preprocessing_config
@@ -265,14 +393,12 @@ class TestFitTransformScalers:
         fit_transform_config,
         preprocessing_config,
     ):
-        cleaned = clean_data(sample_raw_data, raw_columns_config)
-        featured = add_features(cleaned)
-        split, _report = add_split_column(
-            featured,
+        split = _prepare_featured_split(
+            sample_raw_data,
+            raw_columns_config,
             split_ratio,
-            random_state=42,
-            stratify_column=None,
-            preprocessing=preprocessing_config,
+            fit_transform_config,
+            preprocessing_config,
         )
         encoders = fit_encoders(
             split, columns_config, fit_transform_config, preprocessing_config

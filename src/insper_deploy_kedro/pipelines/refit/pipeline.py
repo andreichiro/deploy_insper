@@ -9,10 +9,15 @@ from typing import Any
 from kedro.pipeline import Pipeline, node, pipeline
 
 from insper_deploy_kedro.pipelines.data_engineering.nodes import (
+    add_features,
     fit_encoders,
+    fit_outlier_cappers,
     fit_scalers,
+    fit_zero_imputers,
     transform_encoders,
+    transform_outlier_cappers,
     transform_scalers,
+    transform_zero_imputers,
 )
 from insper_deploy_kedro.pipelines.modelling.nodes import calibrate_model, train_model
 from insper_deploy_kedro.registry import (
@@ -27,9 +32,53 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
     return pipeline(
         [
             node(
-                func=fit_encoders,
+                func=fit_zero_imputers,
                 inputs=[
                     "split_data",
+                    "params:refit_fit_transform",
+                    "params:preprocessing",
+                ],
+                outputs="production_imputers",
+                name="refit_zero_imputers_node",
+                tags=["refit", "imputation"],
+            ),
+            node(
+                func=transform_zero_imputers,
+                inputs=["split_data", "production_imputers"],
+                outputs="production_imputed_data",
+                name="refit_transform_zero_imputers_node",
+                tags=["refit", "imputation"],
+            ),
+            node(
+                func=fit_outlier_cappers,
+                inputs=[
+                    "production_imputed_data",
+                    "params:raw_columns",
+                    "params:refit_fit_transform",
+                    "params:preprocessing",
+                ],
+                outputs="production_outlier_cappers",
+                name="refit_outlier_cappers_node",
+                tags=["refit", "outlier_capping"],
+            ),
+            node(
+                func=transform_outlier_cappers,
+                inputs=["production_imputed_data", "production_outlier_cappers"],
+                outputs="production_capped_data",
+                name="refit_transform_outlier_cappers_node",
+                tags=["refit", "outlier_capping"],
+            ),
+            node(
+                func=add_features,
+                inputs=["production_capped_data"],
+                outputs="production_featured_data",
+                name="refit_add_features_node",
+                tags=["refit", "feature_engineering"],
+            ),
+            node(
+                func=fit_encoders,
+                inputs=[
+                    "production_featured_data",
                     "params:columns",
                     "params:refit_fit_transform",
                     "params:preprocessing",
@@ -40,7 +89,7 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
             ),
             node(
                 func=transform_encoders,
-                inputs=["split_data", "production_encoders"],
+                inputs=["production_featured_data", "production_encoders"],
                 outputs="production_encoded_data",
                 name="refit_transform_encoders_node",
                 tags=["refit", "encoding"],

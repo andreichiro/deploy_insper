@@ -10,9 +10,13 @@ from insper_deploy_kedro.pipelines.data_engineering.nodes import (
     add_split_column,
     clean_data,
     fit_encoders,
+    fit_outlier_cappers,
     fit_scalers,
+    fit_zero_imputers,
     transform_encoders,
+    transform_outlier_cappers,
     transform_scalers,
+    transform_zero_imputers,
 )
 from insper_deploy_kedro.pipelines.modelling.nodes import train_model
 
@@ -25,12 +29,63 @@ PREPROCESSING_FIXTURE: dict = {
         "label": "stratified_random_baseline",
     },
     "categorical_encoder": {
-        "class_path": "sklearn.preprocessing.OrdinalEncoder",
+        "class_path": "sklearn.preprocessing.OneHotEncoder",
         "init_args": {
-            "handle_unknown": "use_encoded_value",
-            "unknown_value": -1,
-            "dtype": int,
+            "handle_unknown": "ignore",
+            "drop": "first",
+            "sparse_output": False,
+            "dtype": float,
         },
+        "category_orders": {
+            "age_category": ["mature", "senior"],
+            "bmi_category": ["underweight", "healthy", "overweight", "obese"],
+            "glucose_category": ["normal", "prediabetes", "diabetes"],
+            "age_bmi_category": [
+                "underweight_mature",
+                "underweight_senior",
+                "healthy_mature",
+                "healthy_senior",
+                "overweight_mature",
+                "overweight_senior",
+                "obese_mature",
+                "obese_senior",
+            ],
+            "age_glucose_category": [
+                "low_mature",
+                "low_senior",
+                "normal_mature",
+                "normal_senior",
+                "hidden_mature",
+                "hidden_senior",
+                "high_mature",
+                "high_senior",
+            ],
+            "insulin_category": ["normal", "abnormal"],
+        },
+    },
+    "zero_as_missing": {
+        "columns": ["Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI"],
+        "scaler": {"class_path": "sklearn.preprocessing.RobustScaler", "init_args": {}},
+        "imputer": {
+            "class_path": "sklearn.impute.KNNImputer",
+            "init_args": {"n_neighbors": 2, "keep_empty_features": True},
+        },
+    },
+    "outlier_capping": {
+        "enabled": True,
+        "lower_quantile": 0.05,
+        "upper_quantile": 0.95,
+        "iqr_multiplier": 1.5,
+        "columns": [
+            "Pregnancies",
+            "Glucose",
+            "BloodPressure",
+            "SkinThickness",
+            "Insulin",
+            "BMI",
+            "DiabetesPedigreeFunction",
+            "Age",
+        ],
     },
     "numerical_scaler": {
         "class_path": "sklearn.preprocessing.StandardScaler",
@@ -248,20 +303,56 @@ def raw_columns_config() -> dict[str, list[str]]:
 @pytest.fixture()
 def columns_config() -> dict[str, list[str]]:
     """Config completa de colunas, incluindo features derivadas"""
+    numerical = [
+        "Pregnancies",
+        "Glucose",
+        "BloodPressure",
+        "SkinThickness",
+        "Insulin",
+        "BMI",
+        "DiabetesPedigreeFunction",
+        "Age",
+        "glucose_bmi_interaction",
+        "glucose_insulin_interaction",
+        "glucose_pregnancies_interaction",
+    ]
+    categorical = [
+        "age_category",
+        "bmi_category",
+        "glucose_category",
+        "age_bmi_category",
+        "age_glucose_category",
+        "insulin_category",
+    ]
+    encoded_categorical = [
+        "age_category_senior",
+        "bmi_category_healthy",
+        "bmi_category_overweight",
+        "bmi_category_obese",
+        "glucose_category_prediabetes",
+        "glucose_category_diabetes",
+        "age_bmi_category_underweight_senior",
+        "age_bmi_category_healthy_mature",
+        "age_bmi_category_healthy_senior",
+        "age_bmi_category_overweight_mature",
+        "age_bmi_category_overweight_senior",
+        "age_bmi_category_obese_mature",
+        "age_bmi_category_obese_senior",
+        "age_glucose_category_low_senior",
+        "age_glucose_category_normal_mature",
+        "age_glucose_category_normal_senior",
+        "age_glucose_category_hidden_mature",
+        "age_glucose_category_hidden_senior",
+        "age_glucose_category_high_mature",
+        "age_glucose_category_high_senior",
+        "insulin_category_abnormal",
+    ]
     return {
         "target": ["Outcome"],
-        "categorical": [],
-        "numerical": [
-            "Pregnancies",
-            "Glucose",
-            "BloodPressure",
-            "SkinThickness",
-            "Insulin",
-            "BMI",
-            "DiabetesPedigreeFunction",
-            "Age",
-            "glucose_bmi_interaction",
-        ],
+        "categorical": categorical,
+        "numerical": numerical,
+        "encoded_categorical": encoded_categorical,
+        "model_features": numerical + encoded_categorical,
     }
 
 
@@ -321,18 +412,27 @@ def master_table(
 ) -> pd.DataFrame:
     """Master table completa passando por todo o pipeline DE"""
     cleaned = clean_data(sample_raw_data, raw_columns_config)
-    featured = add_features(cleaned)
     split = add_split_column(
-        featured,
+        cleaned,
         split_ratio,
         random_state=42,
         stratify_column="Outcome",
         preprocessing=preprocessing_config,
     )[0]
-    encoders = fit_encoders(
-        split, columns_config, fit_transform_config, preprocessing_config
+    imputers = fit_zero_imputers(split, fit_transform_config, preprocessing_config)
+    imputed = transform_zero_imputers(split, imputers)
+    outlier_cappers = fit_outlier_cappers(
+        imputed,
+        raw_columns_config,
+        fit_transform_config,
+        preprocessing_config,
     )
-    encoded = transform_encoders(split, encoders)
+    capped = transform_outlier_cappers(imputed, outlier_cappers)
+    featured = add_features(capped)
+    encoders = fit_encoders(
+        featured, columns_config, fit_transform_config, preprocessing_config
+    )
+    encoded = transform_encoders(featured, encoders)
     scalers = fit_scalers(
         encoded, columns_config, fit_transform_config, preprocessing_config
     )

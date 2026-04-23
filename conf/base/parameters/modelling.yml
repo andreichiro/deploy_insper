@@ -248,7 +248,7 @@ feature_selection:
     - calibration_intercept_abs
   prefer_fewer_features: true
   min_blocks: 1
-  max_blocks: 9
+  max_blocks: 10
   max_candidates: 1024
   feature_blocks:
     pregnancies: [Pregnancies]
@@ -259,11 +259,43 @@ feature_selection:
     bmi_axis: [BMI]
     pedigree_axis: [DiabetesPedigreeFunction]
     age_axis: [Age]
-    glucose_bmi_signal: [glucose_bmi_interaction]
+    engineered_continuous_signals:
+      - glucose_bmi_interaction
+      - glucose_insulin_interaction
+      - glucose_pregnancies_interaction
+    clinical_categorical_signals:
+      - age_category_senior
+      - bmi_category_healthy
+      - bmi_category_overweight
+      - bmi_category_obese
+      - glucose_category_prediabetes
+      - glucose_category_diabetes
+      - age_bmi_category_underweight_senior
+      - age_bmi_category_healthy_mature
+      - age_bmi_category_healthy_senior
+      - age_bmi_category_overweight_mature
+      - age_bmi_category_overweight_senior
+      - age_bmi_category_obese_mature
+      - age_bmi_category_obese_senior
+      - age_glucose_category_low_senior
+      - age_glucose_category_normal_mature
+      - age_glucose_category_normal_senior
+      - age_glucose_category_hidden_mature
+      - age_glucose_category_hidden_senior
+      - age_glucose_category_high_mature
+      - age_glucose_category_high_senior
+      - insulin_category_abnormal
   required_blocks:
-    glucose_bmi_signal:
+    engineered_continuous_signals:
       - glucose_axis
       - bmi_axis
+      - insulin_axis
+      - pregnancies
+    clinical_categorical_signals:
+      - glucose_axis
+      - bmi_axis
+      - insulin_axis
+      - age_axis
 
 decision_policies:
   development_splits:
@@ -436,3 +468,27 @@ permutation_importance:
       - Age
     engineered_signals:
       - glucose_bmi_interaction
+      - glucose_insulin_interaction
+      - glucose_pregnancies_interaction
+    clinical_categorical_signals:
+      - age_category_senior
+      - bmi_category_healthy
+      - bmi_category_overweight
+      - bmi_category_obese
+      - glucose_category_prediabetes
+      - glucose_category_diabetes
+      - age_bmi_category_underweight_senior
+      - age_bmi_category_healthy_mature
+      - age_bmi_category_healthy_senior
+      - age_bmi_category_overweight_mature
+      - age_bmi_category_overweight_senior
+      - age_bmi_category_obese_mature
+      - age_bmi_category_obese_senior
+      - age_glucose_category_low_senior
+      - age_glucose_category_normal_mature
+      - age_glucose_category_normal_senior
+      - age_glucose_category_hidden_mature
+      - age_glucose_category_hidden_senior
+      - age_glucose_category_high_mature
+      - age_glucose_category_high_senior
+      - insulin_category_abnormal

@@ -21,8 +21,8 @@
     "calibration_slope_error",
     "calibration_intercept_abs"
   ],
-  "candidate_count": 957,
-  "selected_model_candidate_count": 319,
+  "candidate_count": 885,
+  "selected_model_candidate_count": 295,
   "selector_source": "candidate_model",
   "per_model_manifests": {
     "baseline": {
@@ -49,8 +49,8 @@
         "calibration_slope_error",
         "calibration_intercept_abs"
       ],
-      "candidate_count": 319,
-      "selected_candidate_id": 21,
+      "candidate_count": 295,
+      "selected_candidate_id": 22,
       "selected_block_names": [
         "glucose_axis",
         "bmi_axis"
@@ -61,9 +61,9 @@
       ],
       "selected_feature_count": 2,
       "selected_feature_names_text": "Glucose, BMI",
-      "best_primary_mean": 0.16637458743256608,
-      "selected_primary_mean": 0.17622262202890365,
-      "selected_primary_sem": 0.010267872398292782,
+      "best_primary_mean": 0.16056899799565366,
+      "selected_primary_mean": 0.16845545630909786,
+      "selected_primary_sem": 0.011996884116912796,
       "selected_within_one_se": true,
       "selection_policy": {
         "prefer_fewer_features": true,
@@ -94,8 +94,33 @@
           "age_axis": [
             "Age"
           ],
-          "glucose_bmi_signal": [
-            "glucose_bmi_interaction"
+          "engineered_continuous_signals": [
+            "glucose_bmi_interaction",
+            "glucose_insulin_interaction",
+            "glucose_pregnancies_interaction"
+          ],
+          "clinical_categorical_signals": [
+            "age_category_senior",
+            "bmi_category_healthy",
+            "bmi_category_overweight",
+            "bmi_category_obese",
+            "glucose_category_prediabetes",
+            "glucose_category_diabetes",
+            "age_bmi_category_underweight_senior",
+            "age_bmi_category_healthy_mature",
+            "age_bmi_category_healthy_senior",
+            "age_bmi_category_overweight_mature",
+            "age_bmi_category_overweight_senior",
+            "age_bmi_category_obese_mature",
+            "age_bmi_category_obese_senior",
+            "age_glucose_category_low_senior",
+            "age_glucose_category_normal_mature",
+            "age_glucose_category_normal_senior",
+            "age_glucose_category_hidden_mature",
+            "age_glucose_category_hidden_senior",
+            "age_glucose_category_high_mature",
+            "age_glucose_category_high_senior",
+            "insulin_category_abnormal"
           ]
         }
       }
@@ -124,8 +149,8 @@
         "calibration_slope_error",
         "calibration_intercept_abs"
       ],
-      "candidate_count": 319,
-      "selected_candidate_id": 179,
+      "candidate_count": 295,
+      "selected_candidate_id": 176,
       "selected_block_names": [
         "glucose_axis",
         "bmi_axis",
@@ -140,9 +165,9 @@
       ],
       "selected_feature_count": 4,
       "selected_feature_names_text": "Glucose, BMI, DiabetesPedigreeFunction, Age",
-      "best_primary_mean": 0.1555732778062396,
-      "selected_primary_mean": 0.1555732778062396,
-      "selected_primary_sem": 0.004845468257816818,
+      "best_primary_mean": 0.15481391752826767,
+      "selected_primary_mean": 0.1569130453479962,
+      "selected_primary_sem": 0.004889166829902957,
       "selected_within_one_se": true,
       "selection_policy": {
         "prefer_fewer_features": true,
@@ -173,8 +198,33 @@
           "age_axis": [
             "Age"
           ],
-          "glucose_bmi_signal": [
-            "glucose_bmi_interaction"
+          "engineered_continuous_signals": [
+            "glucose_bmi_interaction",
+            "glucose_insulin_interaction",
+            "glucose_pregnancies_interaction"
+          ],
+          "clinical_categorical_signals": [
+            "age_category_senior",
+            "bmi_category_healthy",
+            "bmi_category_overweight",
+            "bmi_category_obese",
+            "glucose_category_prediabetes",
+            "glucose_category_diabetes",
+            "age_bmi_category_underweight_senior",
+            "age_bmi_category_healthy_mature",
+            "age_bmi_category_healthy_senior",
+            "age_bmi_category_overweight_mature",
+            "age_bmi_category_overweight_senior",
+            "age_bmi_category_obese_mature",
+            "age_bmi_category_obese_senior",
+            "age_glucose_category_low_senior",
+            "age_glucose_category_normal_mature",
+            "age_glucose_category_normal_senior",
+            "age_glucose_category_hidden_mature",
+            "age_glucose_category_hidden_senior",
+            "age_glucose_category_high_mature",
+            "age_glucose_category_high_senior",
+            "insulin_category_abnormal"
           ]
         }
       }
@@ -204,8 +254,8 @@
         "calibration_slope_error",
         "calibration_intercept_abs"
       ],
-      "candidate_count": 319,
-      "selected_candidate_id": 83,
+      "candidate_count": 295,
+      "selected_candidate_id": 85,
       "selected_block_names": [
         "glucose_axis",
         "bmi_axis",
@@ -218,9 +268,9 @@
       ],
       "selected_feature_count": 3,
       "selected_feature_names_text": "Glucose, BMI, Age",
-      "best_primary_mean": 0.17147872121261226,
-      "selected_primary_mean": 0.1771533333797058,
-      "selected_primary_sem": 0.008254962699853215,
+      "best_primary_mean": 0.16536974782925515,
+      "selected_primary_mean": 0.16657622974251646,
+      "selected_primary_sem": 0.007386057720618807,
       "selected_within_one_se": true,
       "selection_policy": {
         "prefer_fewer_features": true,
@@ -251,8 +301,33 @@
           "age_axis": [
             "Age"
           ],
-          "glucose_bmi_signal": [
-            "glucose_bmi_interaction"
+          "engineered_continuous_signals": [
+            "glucose_bmi_interaction",
+            "glucose_insulin_interaction",
+            "glucose_pregnancies_interaction"
+          ],
+          "clinical_categorical_signals": [
+            "age_category_senior",
+            "bmi_category_healthy",
+            "bmi_category_overweight",
+            "bmi_category_obese",
+            "glucose_category_prediabetes",
+            "glucose_category_diabetes",
+            "age_bmi_category_underweight_senior",
+            "age_bmi_category_healthy_mature",
+            "age_bmi_category_healthy_senior",
+            "age_bmi_category_overweight_mature",
+            "age_bmi_category_overweight_senior",
+            "age_bmi_category_obese_mature",
+            "age_bmi_category_obese_senior",
+            "age_glucose_category_low_senior",
+            "age_glucose_category_normal_mature",
+            "age_glucose_category_normal_senior",
+            "age_glucose_category_hidden_mature",
+            "age_glucose_category_hidden_senior",
+            "age_glucose_category_high_mature",
+            "age_glucose_category_high_senior",
+            "insulin_category_abnormal"
           ]
         }
       }

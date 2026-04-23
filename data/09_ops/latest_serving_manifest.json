@@ -1,8 +1,8 @@
 {
   "manifest_type": "serving_manifest",
-  "generated_at": "2026-04-10T01:46:05.264940+00:00",
-  "registry_id": "abcd8552-1a6c-497a-90ae-cbad12d5e490",
-  "created_at": "2026-04-10T01:46:05.257107+00:00",
+  "generated_at": "2026-04-23T14:51:50.808611+00:00",
+  "registry_id": "e3ab1795-9c6d-40fa-afd3-f0d95f0f2cc7",
+  "created_at": "2026-04-23T14:51:50.800356+00:00",
   "stage": "production",
   "class_path": "catboost.CatBoostClassifier",
   "train_splits": [
@@ -12,7 +12,7 @@
   ],
   "decision_policy_name": "prioritize_recall",
   "decision_policy_description": "Pol\u00edtica cl\u00ednica que reduz falsos negativos mesmo aceitando mais falsos positivos.",
-  "decision_threshold": 0.15000000000000002,
+  "decision_threshold": 0.1,
   "risk_bands": [
     {
       "name": "low",
@@ -66,7 +66,7 @@
       "fp_share": 0.14285714285714285,
       "fn_share": 0.14285714285714285,
       "tp_share": 0.21428571428571427,
-      "mean_risk_score": 0.3717881461810201,
+      "mean_risk_score": 0.3674944409741864,
       "expected_cost": 28.0
     },
     {
@@ -77,26 +77,26 @@
       "policy_description": "Pol\u00edtica cl\u00ednica que reduz falsos negativos mesmo aceitando mais falsos positivos.",
       "strategy": "min_expected_cost",
       "constraint_satisfied": true,
-      "tn": 30,
-      "fp": 33,
-      "fn": 3,
-      "tp": 32,
-      "threshold": 0.15000000000000002,
-      "accuracy": 0.6326530612244898,
-      "precision": 0.49230769230769234,
-      "recall": 0.9142857142857143,
-      "specificity": 0.47619047619047616,
-      "f1": 0.64,
-      "false_positive_rate": 0.5238095238095238,
-      "false_negative_rate": 0.08571428571428572,
-      "positive_prediction_rate": 0.6632653061224489,
+      "tn": 19,
+      "fp": 44,
+      "fn": 2,
+      "tp": 33,
+      "threshold": 0.1,
+      "accuracy": 0.5306122448979592,
+      "precision": 0.42857142857142855,
+      "recall": 0.9428571428571428,
+      "specificity": 0.30158730158730157,
+      "f1": 0.5892857142857142,
+      "false_positive_rate": 0.6984126984126984,
+      "false_negative_rate": 0.05714285714285714,
+      "positive_prediction_rate": 0.7857142857142857,
       "positive_prevalence": 0.35714285714285715,
-      "tn_share": 0.30612244897959184,
-      "fp_share": 0.336734693877551,
-      "fn_share": 0.030612244897959183,
-      "tp_share": 0.32653061224489793,
-      "mean_risk_score": 0.3717881461810201,
-      "expected_cost": 57.0
+      "tn_share": 0.19387755102040816,
+      "fp_share": 0.4489795918367347,
+      "fn_share": 0.02040816326530612,
+      "tp_share": 0.336734693877551,
+      "mean_risk_score": 0.3674944409741864,
+      "expected_cost": 60.0
     },
     {
       "model_name": "optimized",
@@ -106,52 +106,64 @@
       "policy_description": "Pol\u00edtica conservadora que reduz alertas falsos, aceitando mais risco de falso negativo.",
       "strategy": "min_expected_cost",
       "constraint_satisfied": true,
-      "tn": 61,
-      "fp": 2,
-      "fn": 29,
-      "tp": 6,
+      "tn": 62,
+      "fp": 1,
+      "fn": 30,
+      "tp": 5,
       "threshold": 0.8000000000000003,
       "accuracy": 0.6836734693877551,
-      "precision": 0.75,
-      "recall": 0.17142857142857143,
-      "specificity": 0.9682539682539683,
-      "f1": 0.2790697674418604,
-      "false_positive_rate": 0.031746031746031744,
-      "false_negative_rate": 0.8285714285714286,
-      "positive_prediction_rate": 0.08163265306122448,
+      "precision": 0.8333333333333334,
+      "recall": 0.14285714285714285,
+      "specificity": 0.9841269841269841,
+      "f1": 0.2439024390243902,
+      "false_positive_rate": 0.015873015873015872,
+      "false_negative_rate": 0.8571428571428571,
+      "positive_prediction_rate": 0.061224489795918366,
       "positive_prevalence": 0.35714285714285715,
-      "tn_share": 0.6224489795918368,
-      "fp_share": 0.02040816326530612,
-      "fn_share": 0.29591836734693877,
-      "tp_share": 0.061224489795918366,
-      "mean_risk_score": 0.3717881461810201,
-      "expected_cost": 41.0
+      "tn_share": 0.6326530612244898,
+      "fp_share": 0.01020408163265306,
+      "fn_share": 0.30612244897959184,
+      "tp_share": 0.05102040816326531,
+      "mean_risk_score": 0.3674944409741864,
+      "expected_cost": 36.0
     }
   ],
   "artifact_inventory": [
     {
-      "path": "/Users/akatsurada/Documents/INSPER/deploy/aula_2/data/06_models/production_encoders.pkl",
+      "path": "/Users/akatsurada/Documents/INSPER/deploy_insper/data/06_models/production_imputers.pkl",
       "exists": true,
-      "size_bytes": 5,
-      "modified_at": "2026-04-10T01:33:00.397513+00:00"
+      "size_bytes": 30472,
+      "modified_at": "2026-04-23T14:11:49.570900+00:00"
     },
     {
-      "path": "/Users/akatsurada/Documents/INSPER/deploy/aula_2/data/06_models/production_scalers.pkl",
+      "path": "/Users/akatsurada/Documents/INSPER/deploy_insper/data/06_models/production_outlier_cappers.pkl",
       "exists": true,
-      "size_bytes": 2426,
-      "modified_at": "2026-04-10T01:33:00.916654+00:00"
+      "size_bytes": 309,
+      "modified_at": "2026-04-23T14:11:49.625944+00:00"
     },
     {
-      "path": "/Users/akatsurada/Documents/INSPER/deploy/aula_2/data/06_models/raw_production_model.pkl",
+      "path": "/Users/akatsurada/Documents/INSPER/deploy_insper/data/06_models/production_encoders.pkl",
       "exists": true,
-      "size_bytes": 67487,
-      "modified_at": "2026-04-10T01:46:04.982349+00:00"
+      "size_bytes": 2873,
+      "modified_at": "2026-04-23T14:11:49.688159+00:00"
     },
     {
-      "path": "/Users/akatsurada/Documents/INSPER/deploy/aula_2/data/06_models/production_model.pkl",
+      "path": "/Users/akatsurada/Documents/INSPER/deploy_insper/data/06_models/production_scalers.pkl",
       "exists": true,
-      "size_bytes": 198271,
-      "modified_at": "2026-04-10T01:46:05.167598+00:00"
+      "size_bytes": 2954,
+      "modified_at": "2026-04-23T14:11:49.741975+00:00"
+    },
+    {
+      "path": "/Users/akatsurada/Documents/INSPER/deploy_insper/data/06_models/raw_production_model.pkl",
+      "exists": true,
+      "size_bytes": 77391,
+      "modified_at": "2026-04-23T14:51:50.536980+00:00"
+    },
+    {
+      "path": "/Users/akatsurada/Documents/INSPER/deploy_insper/data/06_models/production_model.pkl",
+      "exists": true,
+      "size_bytes": 377453,
+      "modified_at": "2026-04-23T14:51:50.718239+00:00"
     }
   ],
   "registry_status": "persisted",

@@ -54,6 +54,8 @@ def test_record_model_registry_entry_tracks_artifact_inventory(
     isolated_registry_store,
 ):
     for filename in (
+        "production_imputers.pkl",
+        "production_outlier_cappers.pkl",
         "production_encoders.pkl",
         "production_scalers.pkl",
         "raw_production_model.pkl",
@@ -72,7 +74,7 @@ def test_record_model_registry_entry_tracks_artifact_inventory(
     )
 
     assert record["stage"] == "production"
-    assert len(record["artifact_inventory"]) == 4
+    assert len(record["artifact_inventory"]) == 6
     assert all(item["exists"] for item in record["artifact_inventory"])
     assert ops_store.list_model_registry_entries(limit=1)[0]["class_path"] == (
         "catboost.CatBoostClassifier"

@@ -30,6 +30,8 @@ PACKAGE_NAME = Path(__file__).resolve().parent.name
 TRAIN_PIPELINES = ["data_engineering", "modelling", "refit"]
 BATCH_INFERENCE_PIPELINES = ["inference"]
 PRODUCTION_ARTIFACT_DATASETS = {
+    "imputers": "production_imputers",
+    "outlier_cappers": "production_outlier_cappers",
     "encoders": "production_encoders",
     "scalers": "production_scalers",
     "model": "production_model",
@@ -37,6 +39,8 @@ PRODUCTION_ARTIFACT_DATASETS = {
 INFERENCE_MEMORY_DATASETS = (
     "raw_data_inference",
     "cleaned_inference",
+    "imputed_inference",
+    "capped_inference",
     "featured_inference",
     "encoded_inference",
     "scaled_inference",
@@ -145,16 +149,17 @@ def get_production_status() -> dict[str, Any]:
     if artifacts is None:
         return {"model_loaded": False, "model_version": None}
 
-    encoders = artifacts.get("encoders")
-    scalers = artifacts.get("scalers")
-    model_artifact = artifacts.get("model")
-    if not isinstance(encoders, dict):
-        return {"model_loaded": False, "model_version": None}
-    if not isinstance(scalers, dict):
-        return {"model_loaded": False, "model_version": None}
-    if not isinstance(model_artifact, dict):
+    required_artifacts = (
+        "imputers",
+        "outlier_cappers",
+        "encoders",
+        "scalers",
+        "model",
+    )
+    if any(not isinstance(artifacts.get(name), dict) for name in required_artifacts):
         return {"model_loaded": False, "model_version": None}
 
+    model_artifact = artifacts["model"]
     model_version = model_artifact.get("class_path", "unknown")
     return {
         "model_loaded": True,
@@ -171,9 +176,7 @@ def run_online_inference(
     ensure_bootstrap()
 
     if output_dataset not in {"predictions", "risk_report"}:
-        raise ValueError(
-            "output_dataset must be one of {'predictions', 'risk_report'}"
-        )
+        raise ValueError("output_dataset must be one of {'predictions', 'risk_report'}")
     resolved_output_dataset = (
         "risk_report" if output_dataset == "predictions" else output_dataset
     )
